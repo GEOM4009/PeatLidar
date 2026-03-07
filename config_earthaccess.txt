@@ -1,0 +1,6 @@
+[CONFIG]
+PolygonsPath = your_path.../polygon_peat_sample.kmz
+DownloadDir = 
+ShortName = ATL08
+StartDate = 2020-01-01
+EndDate = 2021-01-01
