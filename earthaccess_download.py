@@ -11,41 +11,7 @@ import geopandas as gpd
 import shapely
 import configparser
 from pathlib import Path
-
-### read config
-def read_config(config_path):
-    
-    config = configparser.ConfigParser()
-
-    config.read(config_path)
-
-    # read in parameters
-    polygons_path = config['CONFIG']['PolygonsPath']
-    download_dir = config['CONFIG']['DownloadDir']
-    short_name = config['CONFIG']['ShortName']
-    start_date = config['CONFIG']['StartDate']
-    end_date = config['CONFIG']['EndDate']
-
-    ### validation
-
-    # geometry
-    if Path(polygons_path).is_file() == False:
-        raise FileNotFoundError("input geometry filepath is invalid")
-
-    # download directory
-    if download_dir == None:
-        download_dir = (Path.cwd() / "download_dir").mkdir()
-        print("No download directory specified.\nGranules will be downloaded at {download_dir}")
-
-    elif Path(download_dir).is_dir() == False:
-        raise FileNotFoundError("input download directory is invalid")
-
-    # short name -> leave validation to earthaccess
-
-    # date range -> testing required later
-    date_range = (start_date, end_date)
-
-    return polygons_path, download_dir, short_name, date_range
+from process_sat_lidar import read_config
 
 ### authenticate earthdata session
 def authenticate(status_check=True):
