@@ -9,12 +9,25 @@
 import earthaccess 
 import geopandas as gpd
 import shapely
-import configparser
 from pathlib import Path
 from process_sat_lidar import read_config
 
 ### authenticate earthdata session
-def authenticate(status_check=True):
+def authenticate(status_check=False):
+    """
+    Authenticate Earthdata credentials and initialize a session
+
+    Optional
+    ----------
+    status_check : Boolean
+        Default = False
+        Run a status check on the session authentication and connection.
+        This can take >1 minute
+
+    Returns
+    -------
+    None
+    """
 
     earthaccess.login(persist=True)
 
@@ -32,6 +45,23 @@ def authenticate(status_check=True):
     
 ### query granules
 def search(short_name, date_range, polygon):
+    """
+    Query NASA EarthData products
+
+    Parameters
+    ----------
+    short_name : string
+        Short name of the Earthdata product (e.g. GEDI02_A)
+    date_range : tuple
+        Start and end date as strings in YYYY-MM-DD format
+    polygon : string
+        Short name of the Earthdata product (e.g. GEDI02_A)
+
+    Returns
+    -------
+    granules : list
+        List of granule IDs returned by the query
+    """
 
     # query for granules
     granules = earthaccess.search_data(
@@ -49,6 +79,21 @@ def search(short_name, date_range, polygon):
 
 ### download granules
 def download(granules, download_dir):
+    """
+    Download granules from NASA Earthdata
+
+    Parameters
+    ----------
+    granules : list
+        List of granule IDs
+    download_dir : string
+        Path of the download directory
+
+    Returns
+    -------
+    filelist : list
+        List of filepaths of downloaded granules
+    """
 
     # if no granules were passed
     if len(granules) == 0:
@@ -64,10 +109,22 @@ def download(granules, download_dir):
     return filelist
 
 def main():
+    """
+    Run the earthaccess_download script
+
+    Returns
+    -------
+    None
+    """
 
     # read config file
-    config_list = read_config('config_earthaccess.txt')
-    polygons_path, download_dir, short_name, date_range = config_list
+    config_dict = read_config("config_earthaccess.txt")
+
+    # unpack parameters
+    polygons_path = config_dict['PolygonsPath']
+    download_dir = config_dict['DownloadDir']
+    short_name = config_dict['ShortName']
+    date_range = config_dict['DateRange']
 
     # read in polygons
     gdf = gpd.read_file(polygons_path)
