@@ -72,3 +72,7 @@ output/icesat_agg.dbf
 output/icesat_agg.prj
 output/icesat_agg.shp
 .DS_Store
+.DS_Store
+~$flowchart.pptx
+icesat_agg.csv
+icesat.csv

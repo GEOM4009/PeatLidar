@@ -126,7 +126,7 @@ def convert_icesat(test_files):
     final = pd.concat(df_combined_list).reset_index()
 
     # export to csv for testing purposes
-    #final.to_csv("icesat.csv")
+    final.to_csv("icesat.csv")
 
     return final
 
@@ -265,8 +265,8 @@ def aggregate(polygons_path, icesat_df, gedi_df):
 
 
     # export for testing purposes
-    #icesat_stats.to_csv("icesat_agg.csv")
-    #gedi_stats.to_csv("icesat_agg.csv")
+    icesat_stats.to_csv("icesat_agg.csv")
+    #gedi_stats.to_csv("gedi_agg.csv")
 
     return icesat_stats, gedi_stats
     
