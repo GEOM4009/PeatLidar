@@ -106,11 +106,11 @@ def read_config(config_path):
     ### ATL08
 
     # ATL08 beam type 
-    if BeamType not in ['strong', 'weak', 'both']:
+    if BeamType not in ['strong', 'weak', 'all']:
         raise ValueError("input ATL08 beam type is invalid. Please use one of (strong, weak, both)")
 
     # ATL08 night flag -> check values first
-    if NightOnly in ["True", "False"]:
+    if NightOnly not in ["True", "False"]:
         raise ValueError("Night flag parameter is invalid. Please use one of (True, False))")
 
     #################
@@ -137,23 +137,25 @@ def read_config(config_path):
     config_dict = {
         'PolygonsPath' : PolygonsPath,
         'DownloadDir' : DownloadDir,
+        'ShortName' : ShortName,
+        'DateRange' : date_range,
+        'BeamType' : BeamType,
+        'NightOnly' : NightOnly,
+        'QualityFlag' : QualityFlag,
         'OutputDir' : OutputDir,
         'OutputCSV' : OutputCSV,
         'OutputShapefile' : OutputShapefile,
         'OutputParquet' : OutputParquet,
-        'ShortName' : ShortName,
-        'DateRange' : date_range,
-        'NightOnly' : NightOnly,
-        'StrongBeam' : BeamType
     }
 
+    print("---------------------------------")
     print("Config validated!")
 
     return config_dict
 
 
 # filter and extract ICESat-2 vegetation height
-def convert_icesat(test_files):
+def convert_icesat(granules, beam_type, night_only):
     """
     Converts ICESat data from h5 files to dataframes
 
@@ -169,24 +171,58 @@ def convert_icesat(test_files):
     None
     """
 
-    # Night Flag -> int -> 0 = day, 1 = night
-
-    # Beam type -> 
+    print("---------------------------------")
+    print("Started extracting ATL08 data")
 
     # list of groups containing beam data
-    beam_list = ["gt1l", "gt1r", "gt2l", "gt2r", "gt3l", "gt3r"] # groups in h5 file
-    
+    beam_list = ["gt1l", "gt2l", "gt3l", "gt1r", "gt2r", "gt3r"] # groups in h5 file
+
     # create empty list #1
     df_combined_list = []
-    
+
     # iterate through h5 files in directory
-    for file in test_files:
+    for file in granules:
         # read file with H5py
         f = h5py.File(file)
+
+        ### beam type filter
+
+        # if beam_type == all -> continue
+        
+        # get orientation (backward/forward/transition, 0/1/2)
+        orientation = f['orbit_info']['sc_orient'][0]
+
+        # transition period -> low quality data, skip
+        if orientation == 2:
+            continue
+
+        if beam_type == "strong":
+            
+            # forward orientation
+            if orientation == 1:
+                # right beams are strong 
+                beam_list = beam_list[3:]
+
+            # backwards orientation
+            if orientation == 0:
+                # left beams are strong
+                beam_list = beam_list[:3]
+
+        if beam_type == "weak":
+            
+            # forward orientation
+            if orientation == 1:
+                # left beams are weak 
+                beam_list = beam_list[:3]
+
+            # backwards orientation
+            if orientation == 0:
+                # right beams are weak
+                beam_list = beam_list[3:]
         
         # create empty list #2
         df_list = []
-    
+
         # iterate through groups to find beam data
         for group in list(f.keys()):
             if group in beam_list:
@@ -196,20 +232,30 @@ def convert_icesat(test_files):
                         "icesat_canopy" : f[f"{group}/land_segments/canopy/h_canopy"][:],
                         "longitude" : f[f"{group}/land_segments/longitude"][:],
                         "latitude" : f[f"{group}/land_segments/latitude"][:],
+                        "night_flag" : f[f"{group}/land_segments/night_flag"][:],
                         "beam" : str(group)
                 })
+
+                # filter night flag
+                if (night_only == True):
+                    df = df.loc[df['night_flag']==1]
                 
                 # add to list #2
                 df_list.append(df)
-                
+
+        # continue if no results are found
+        if not df_list:
+            continue      
         # concatenate all beams for a given file
         df_combined = pd.concat(df_list)
-    
+
         # add to list #1
         df_combined_list.append(df_combined)
 
     # concatenate all files
     final = pd.concat(df_combined_list).reset_index()
+
+    print(f"{len(final)} filtered observations returned")
 
     # export to csv for testing purposes
     #final.to_csv("icesat.csv")
@@ -218,7 +264,7 @@ def convert_icesat(test_files):
 
 
 # filter and extract GEDI vegetation height
-def convert_gedi(files):
+def convert_gedi(granules, quality_flag):
     """
     Converts GEDI files from h5 to dataframes
 
@@ -233,11 +279,15 @@ def convert_gedi(files):
     -------
     None
     """
+
+    print("---------------------------------")
+    print("Started extracting GEDI02_A data")
+
     # place all data in here
     all_data = []
     
     # look through each file
-    for file in files:
+    for file in granules:
         #print(f"Processing {file}")
     
         with h5py.File(file, 'r') as f:
@@ -268,6 +318,8 @@ def convert_gedi(files):
                     
     # concatenate all data
     final_df = pd.concat(all_data, ignore_index=True)
+
+    print(f"{len(final_df)} filtered observations returned")
     
     # convert to csv for testing purposes
     #final_df.to_csv("gedi.csv", index=False)
@@ -315,9 +367,11 @@ def aggregate(polygons_path, icesat_df, gedi_df):
     -------
     None
     """
-    print("Starting aggregation by polygon")
 
     aoi = gpd.read_file(polygons_path)
+
+    print("---------------------------------")
+    print("Starting aggregation for {len(aoi)} polygons")
 
     #Adding the polygon_id
     aoi["polygon_id"] = range(0, len(aoi)) # changed this to start index at 0
@@ -402,6 +456,9 @@ def compare_data(icesat_agg, gedi_agg):
     None
     """
 
+    print("---------------------------------")
+    print("Starting comparison")
+
     #Combine the stats into one
     df = pd.concat([icesat_agg, gedi_agg], ignore_index=True)
 
@@ -419,6 +476,8 @@ def compare_data(icesat_agg, gedi_agg):
     
     # Export as CSV for testing purposes
     df3.to_csv("comparison.csv", index=False)
+
+    print("Comparison complete")
 
     return df3
 
@@ -453,6 +512,9 @@ def export(icesat_agg, gedi_agg, compared, polygons_path, out_dir, config_dict):
     """
 
     ### NEEDS TESTING
+
+    print("---------------------------------")
+    print("Starting export")
 
     # read output configurations, convert to boolean
     out_csv = (config_dict['OutputCSV'] == 'True')
@@ -496,7 +558,7 @@ def export(icesat_agg, gedi_agg, compared, polygons_path, out_dir, config_dict):
         gedi_agg_gdf.to_file((out_dir + '/gedi_agg.shp'))
         comp_gdf.to_file((out_dir + '/comparison.shp'))
 
-    print("All outputs complete")
+    print("Exporting complete")
 
 
 def main():
@@ -519,20 +581,24 @@ def main():
     polygons_path = config_dict['PolygonsPath']
     download_dir = config_dict['DownloadDir']
     output_dir = config_dict['OutputDir']
+    beam_type = config_dict['BeamType']
+    night_only = config_dict['NightOnly']
+    quality_flag = config_dict['QualityFlag']
   
     # check what data granules are in the download directory
     ATL08_granules = list(Path(download_dir).glob("ATL08*.h5"))
     GEDI02_A_granules = list(Path(download_dir).glob("GEDI02_A*.h5"))
+    print("---------------------------------")
     print(f"{len(ATL08_granules)} ATL08 granules found")
     print(f"{len(GEDI02_A_granules)} GEDI02_A granules found")
 
     ### run appropriate h5 conversions
     # ICESat-2 ATL08
-    icesat_df = convert_icesat(ATL08_granules)
-    print("\nICESat-2 ATL08 granules complete\n")
+    icesat_df = convert_icesat(ATL08_granules, beam_type, night_only)
+    print("ICESat-2 ATL08 granules complete")
     # GEDI L2A
-    gedi_df = convert_gedi(GEDI02_A_granules)
-    print("\nGEDI L2A granules complete\n")
+    gedi_df = convert_gedi(GEDI02_A_granules, quality_flag)
+    print("GEDI L2A granules complete")
  
     # aggregate by polygon
     icesat_agg, gedi_agg = aggregate(polygons_path, icesat_df, gedi_df)

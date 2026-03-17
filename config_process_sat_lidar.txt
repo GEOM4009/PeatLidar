@@ -16,7 +16,7 @@ EndDate = 2026-06-01
 
 [ATL08]
 
-;Beam type filter (strong, weak, both)
+;Beam type filter (strong, weak, all)
 BeamType = strong
 
 ;Night flag filter
@@ -24,7 +24,7 @@ NightOnly = True
 
 
 [GEDI02_A]
-QualityFlag = None
+QualityFlag = False
 
 
 [OUTPUT]
