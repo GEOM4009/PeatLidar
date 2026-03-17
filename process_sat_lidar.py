@@ -110,6 +110,8 @@ def read_config(config_path):
         raise ValueError("input ATL08 beam type is invalid. Please use one of (strong, weak, both)")
 
     # ATL08 night flag -> check values first
+    if NightOnly in ["True", "False"]:
+        raise ValueError("Night flag parameter is invalid. Please use one of (True, False))")
 
     #################
     ### GEDI02_A
@@ -166,6 +168,10 @@ def convert_icesat(test_files):
     -------
     None
     """
+
+    # Night Flag -> int -> 0 = day, 1 = night
+
+    # Beam type -> 
 
     # list of groups containing beam data
     beam_list = ["gt1l", "gt1r", "gt2l", "gt2r", "gt3l", "gt3r"] # groups in h5 file
@@ -298,7 +304,7 @@ def aggregate(polygons_path, icesat_df, gedi_df):
     """
     Converts GEDI files from h5 to dataframes
 
-    @author: Ethan Gauthier
+    @author: Ethan Gauthier (lead), Vincent Ribberink
 
     Parameters
     ----------
