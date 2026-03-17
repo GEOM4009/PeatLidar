@@ -21,8 +21,9 @@ def authenticate(status_check=False):
     ----------
     status_check : Boolean
         Default = False
-        Run a status check on the session authentication and connection.
-        This can take >1 minute
+        When true, run a status check on the session authentication and connection.
+            raises an error if login or connection are invalid
+            This can take >1 minute
 
     Returns
     -------
@@ -118,7 +119,7 @@ def main():
     """
 
     # read config file
-    config_dict = read_config("config_earthaccess.txt")
+    config_dict = read_config("config_process_sat_lidar.txt")
 
     # unpack parameters
     polygons_path = config_dict['PolygonsPath']
