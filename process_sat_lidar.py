@@ -301,6 +301,7 @@ def convert_gedi(granules, quality_flag):
                     lat = beam['geolocation/lat_lowestmode_a1'][:]
                     lon = beam['geolocation/lon_lowestmode_a1'][:]
                     elev = beam['elev_lowestmode'][:]
+                    qual = beam['quality_flag'][:]
     
                     canopy_h = rh[:,98]
     
@@ -311,10 +312,13 @@ def convert_gedi(granules, quality_flag):
                         'latitude': lat,
                         'longitude': lon,
                         'elevation': elev,
-                        'gedi_canopy': canopy_h
+                        'gedi_canopy': canopy_h,
+                        'quality': qual
                     })
-    
-                    all_data.append(df)
+
+                    df2 = df.loc[df.quality==1]
+                    
+                    all_data.append(df2)
                     
     # concatenate all data
     final_df = pd.concat(all_data, ignore_index=True)
