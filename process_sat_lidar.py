@@ -13,6 +13,7 @@ def read_config(config_path):
     """
     Read and validate parameters from a config file.
     Config file must be written in .ini format, though the file can be .txt
+    Based on ConfigParser user guide
 
     @author: Vincent Ribberink
 
@@ -158,6 +159,7 @@ def read_config(config_path):
 def convert_icesat(granules, beam_type, night_only):
     """
     Converts ICESat data from h5 files to dataframes
+    Based on Xarray documentation examples
 
     @authors: Vincent Ribberink, Joshua Salvador
 
@@ -230,6 +232,7 @@ def convert_icesat(granules, beam_type, night_only):
                 # create pandas dataframe with canopy height, coordinates
                 df = pd.DataFrame({
                         "icesat_canopy" : f[f"{group}/land_segments/canopy/h_canopy"][:],
+                        "icesat_canopy_uncertainty" : f[f"{group}/land_segments/canopy/h_canopy_uncertainty"][:],
                         "longitude" : f[f"{group}/land_segments/longitude"][:],
                         "latitude" : f[f"{group}/land_segments/latitude"][:],
                         "night_flag" : f[f"{group}/land_segments/night_flag"][:],
@@ -315,7 +318,7 @@ def convert_gedi(granules, quality_flag):
                         'gedi_canopy': canopy_h,
                         'quality': qual
                     })
-
+    
                     df2 = df.loc[df.quality==1]
                     
                     all_data.append(df2)
@@ -354,7 +357,6 @@ def within_100m(geom, df, xcol, ycol, crs):
     return gdf_join
 '''
 
-#### TO DO -> this function is returning an empty dataframe for ICESat-2 data
 # aggregate data by polygons
 def aggregate(polygons_path, icesat_df, gedi_df):
     """
@@ -375,13 +377,13 @@ def aggregate(polygons_path, icesat_df, gedi_df):
     aoi = gpd.read_file(polygons_path)
 
     print("---------------------------------")
-    print("Starting aggregation for {len(aoi)} polygons")
+    print(f"Starting aggregation for {len(aoi)} polygons")
 
     #Adding the polygon_id
     aoi["polygon_id"] = range(0, len(aoi)) # changed this to start index at 0
 
     #Assigning polygon ids to Lidar csvs
-    def assign_polygon_ids(df, aoi_gdf):
+    def assign_polygon_ids(df, aoi_gdf, satellite_name):
 
         #Convert Lidar points to GeoDataFrame
         gdf = gpd.GeoDataFrame(
@@ -393,7 +395,6 @@ def aggregate(polygons_path, icesat_df, gedi_df):
         #Spatial join by polygon_id
         joined = gpd.sjoin(gdf, aoi_gdf[["polygon_id", "geometry"]], how="inner")
 
-
         #Drop geometry for clean DataFrame
         return pd.DataFrame(joined.drop(columns="geometry"))
     
@@ -401,8 +402,8 @@ def aggregate(polygons_path, icesat_df, gedi_df):
     #icesat_df = pd.read_csv("icesat.csv")
     #gedi_df = pd.read_csv("gedi.csv")
 
-    icesat_joined = assign_polygon_ids(icesat_df, aoi)
-    gedi_joined = assign_polygon_ids(gedi_df, aoi)
+    icesat_joined = assign_polygon_ids(icesat_df, aoi, "ICESat-2")
+    gedi_joined = assign_polygon_ids(gedi_df, aoi, "GEDI")
 
     #
     def aggregate_by_polygon(df, stats, satellite_name):
@@ -412,7 +413,7 @@ def aggregate(polygons_path, icesat_df, gedi_df):
         #Detect measurement columns
         measurement_cols = [
             col for col in df.columns
-            if col in ["icesat_canopy", "gedi_canopy", "elevation"]
+            if col in ["icesat_canopy", "icesat_canopy_uncertainty", "gedi_canopy", "elevation"]
         ]
 
         #Compute stats
@@ -434,7 +435,7 @@ def aggregate(polygons_path, icesat_df, gedi_df):
     gedi_agg = aggregate_by_polygon(gedi_joined, stats, "GEDI")
 
 
-    # export for testing purposes
+    # export to csv for testing purposes
     #icesat_agg.to_csv("icesat_agg.csv")
     #gedi_agg.to_csv("gedi_agg.csv")
 
@@ -589,7 +590,7 @@ def main():
     night_only = config_dict['NightOnly']
     quality_flag = config_dict['QualityFlag']
   
-    # check what data granules are in the download directory
+    # check existing granules in the download directory
     ATL08_granules = list(Path(download_dir).glob("ATL08*.h5"))
     GEDI02_A_granules = list(Path(download_dir).glob("GEDI02_A*.h5"))
     print("---------------------------------")
