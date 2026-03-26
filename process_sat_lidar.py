@@ -593,6 +593,11 @@ def main():
     # check existing granules in the download directory
     ATL08_granules = list(Path(download_dir).glob("ATL08*.h5"))
     GEDI02_A_granules = list(Path(download_dir).glob("GEDI02_A*.h5"))
+
+    # exit if download directory is empty
+    if len(ATL08_granules) + len(GEDI02_A_granules) == 0:
+        raise FileNotFoundError("No granules were found in download directory")
+    
     print("---------------------------------")
     print(f"{len(ATL08_granules)} ATL08 granules found")
     print(f"{len(GEDI02_A_granules)} GEDI02_A granules found")
