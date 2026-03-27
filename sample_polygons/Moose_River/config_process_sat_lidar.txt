@@ -1,7 +1,7 @@
 [INPUT]
 
 ;Path to the input polygon(s) geometry file (common geospatial formats)
-PolygonsPath = test_polygons\\polygon_peat_sample.kmz
+PolygonsPath = Moose_River.kmz
 
 ;Path to the directory where data granules will be downloaded
 DownloadDir = download_dir
@@ -10,8 +10,8 @@ DownloadDir = download_dir
 ShortName = both
 
 ;Date range for the earthdata query
-StartDate = 2025-06-01
-EndDate = 2026-06-01
+StartDate = 2022-01-01
+EndDate = 2022-06-01
 
 
 [ATL08]
@@ -24,7 +24,7 @@ NightOnly = True
 
 
 [GEDI02_A]
-QualityFlag = False
+QualityFlag = True
 
 
 [OUTPUT]
@@ -35,4 +35,4 @@ OutputDir = output
 ;Output file format options
 OutputCSV = True
 OutputParquet = True
-OutputShapefile = True
+OutputShapefile = False

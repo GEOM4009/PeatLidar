@@ -73,7 +73,7 @@ def read_config(config_path):
         raise FileNotFoundError("input download directory is invalid or does not exist")
     
     # short name 
-    if ShortName not in ['ATL08', 'GEDI']:
+    if ShortName not in ['ATL08', 'GEDI02_A', 'both']:
         raise ValueError("Input short name is invalid")
 
     # date range
@@ -154,6 +154,71 @@ def read_config(config_path):
 
     return config_dict
 
+# get important info on downloaded granules (number, short name)
+def download_check(download_dir, short_name):
+    """
+    Prints important information about the granules in the download directory
+
+    @author: Vincent Ribberink
+
+    Parameters
+    ----------
+    download_dir : String
+        string path to the directory containing downloaded ATL08 and GEDI02_A .h5 granules
+
+    Returns
+    -------
+    icesat_only (bool):
+        True if only ATL08 granules are found
+    gedi_only (bool):
+        True if only GEDI02_A granules are found
+    ATL08_granules (list):
+        List of ICESat-2 ATL08 granules in download directory
+    GEDI02_A_granules (list):
+        List of GEDI L2A granules in download directory
+    """
+    # check existing granules in the download directory
+    ATL08_granules = list(Path(download_dir).glob("ATL08*.h5"))
+    GEDI02_A_granules = list(Path(download_dir).glob("GEDI02_A*.h5"))
+        
+    icesat_only = False
+    gedi_only = False
+
+    # override with short name if given -> prevents unnecessary converting and filtering
+    if short_name == 'ATL08':
+        icesat_only = True
+        # exit if download dir is empty
+        if len(ATL08_granules) == 0:
+            raise FileNotFoundError("No granules were found in download directory")
+
+    elif short_name == 'GEDI02_A':
+        gedi_only = True
+        # exit if download dir is empty
+        if len(GEDI02_A_granules) == 0:
+            raise FileNotFoundError("No granules were found in download directory")
+
+    else:
+        # if 0 granules are found for 1 or more short names
+        if len(GEDI02_A_granules) == 0:
+            # exit if download directory is empty
+            if len(ATL08_granules) == 0:
+                raise FileNotFoundError("No granules were found in download directory")
+            # otherwise continue with only ATL08
+            print(f"{len(ATL08_granules)} ATL08 granules found")
+            print("0 GEDI L2A granules found in download directory. No comparison outputs will be created.")
+            icesat_only = True
+
+        elif len(ATL08_granules) == 0:
+            print(f"{len(GEDI02_A_granules)} GEDI02_A granules found")
+            print("0 ICESat-2 ATL08 granules found in download directory. No comparison outputs will be created.")
+            gedi_only = True
+
+        # if granules are found for both short names
+        else:
+            print(f"{len(ATL08_granules)} ATL08 granules found")
+            print(f"{len(GEDI02_A_granules)} GEDI02_A granules found")
+
+    return ATL08_granules, GEDI02_A_granules, icesat_only, gedi_only
 
 # filter and extract ICESat-2 vegetation height
 def convert_icesat(granules, beam_type, night_only):
@@ -184,8 +249,15 @@ def convert_icesat(granules, beam_type, night_only):
 
     # iterate through h5 files in directory
     for file in granules:
-        # read file with H5py
-        f = h5py.File(file)
+        
+        try:
+            
+            # read file with H5py
+            f = h5py.File(file)
+        
+        except:
+            print(f"Skipping corrupted granule {file}")
+            continue
 
         ### beam type filter
 
@@ -239,6 +311,9 @@ def convert_icesat(granules, beam_type, night_only):
                         "beam" : str(group)
                 })
 
+                # filter out invalid canopy heights (3.4 e38)
+                df = df.loc[(df['icesat_canopy'] < 10000) & (df['icesat_canopy_uncertainty'] < 1000)]
+
                 # filter night flag
                 if (night_only == True):
                     df = df.loc[df['night_flag']==1]
@@ -261,17 +336,16 @@ def convert_icesat(granules, beam_type, night_only):
     print(f"{len(final)} filtered observations returned")
 
     # export to csv for testing purposes
-    #final.to_csv("icesat.csv")
+    final.to_csv("icesat.csv")
 
     return final
-
 
 # filter and extract GEDI vegetation height
 def convert_gedi(granules, quality_flag):
     """
     Converts GEDI files from h5 to dataframes
 
-    @author: Joshua Salvador
+    @author: Joshua Salvador (lead), Vincent Ribberink
 
     Parameters
     ----------
@@ -292,36 +366,42 @@ def convert_gedi(granules, quality_flag):
     # look through each file
     for file in granules:
         #print(f"Processing {file}")
-    
-        with h5py.File(file, 'r') as f:
-            for beam_name in f.keys():
-                beam = f[beam_name]
-    
-                # if beam contains data
-                if 'shot_number' in beam:
-                    shot = beam['shot_number'][:]
-                    rh = beam['rh'][:]
-                    lat = beam['geolocation/lat_lowestmode_a1'][:]
-                    lon = beam['geolocation/lon_lowestmode_a1'][:]
-                    elev = beam['elev_lowestmode'][:]
-                    qual = beam['quality_flag'][:]
-    
-                    canopy_h = rh[:,98]
-    
-                    df = pd.DataFrame({
-                        'file': file,
-                        'beam': beam_name,
-                        'shot_number': shot,
-                        'latitude': lat,
-                        'longitude': lon,
-                        'elevation': elev,
-                        'gedi_canopy': canopy_h,
-                        'quality': qual
-                    })
-    
-                    df2 = df.loc[df.quality==1]
-                    
-                    all_data.append(df2)
+
+        # skip corrupted granules
+        try:
+            with h5py.File(file, 'r') as f:
+                for beam_name in f.keys():
+                    beam = f[beam_name]
+        
+                    # if beam contains data
+                    if 'shot_number' in beam:
+                        shot = beam['shot_number'][:]
+                        rh = beam['rh'][:]
+                        lat = beam['geolocation/lat_lowestmode_a1'][:]
+                        lon = beam['geolocation/lon_lowestmode_a1'][:]
+                        elev = beam['elev_lowestmode'][:]
+                        qual = beam['quality_flag'][:]
+        
+                        canopy_h = rh[:,98]
+        
+                        df = pd.DataFrame({
+                            'file': file,
+                            'beam': beam_name,
+                            'shot_number': shot,
+                            'latitude': lat,
+                            'longitude': lon,
+                            'elevation': elev,
+                            'gedi_canopy': canopy_h,
+                            'quality': qual
+                        })
+        
+                        df2 = df.loc[df.quality==1]
+                        
+                        all_data.append(df2)
+        
+        except:
+            print(f"Skipping corrupted granule: {file}")
+            continue
                     
     # concatenate all data
     final_df = pd.concat(all_data, ignore_index=True)
@@ -333,32 +413,8 @@ def convert_gedi(granules, quality_flag):
 
     return final_df
 
-'''
-# initial spatial join -> filter results within 50 m to save storage space and processing time
-# GEDI footprints are 25 m circles, icesat approximated with 8 meter circles
-# may not be necessary
-def within_100m(geom, df, xcol, ycol, crs):
-
-    # project geometry
-    geom = geom.to_crs(crs) # Statistics Canada Lambert -> should work for most of Canada
-
-    # convert points to gdf
-    gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df[xcol], df[ycol]), crs="EPSG:4326")
-
-    # project points
-    gdf.to_crs(crs, inplace=True) 
-
-    # remove invalid geometries
-    gdf = gdf.loc[gdf.geometry.is_valid]
-
-    # spatial join
-    gdf_join = gdf.sjoin_nearest(geom, how='inner', max_distance=50, distance_col="distance")
-
-    return gdf_join
-'''
-
 # aggregate data by polygons
-def aggregate(polygons_path, icesat_df, gedi_df):
+def aggregate(polygons_path, df, satellite_name, radius):
     """
     Converts GEDI files from h5 to dataframes
 
@@ -373,8 +429,8 @@ def aggregate(polygons_path, icesat_df, gedi_df):
     -------
     None
     """
-
-    aoi = gpd.read_file(polygons_path)
+    crs = "EPSG:3347" # stat can lambert
+    aoi = gpd.read_file(polygons_path).to_crs(crs)
 
     print("---------------------------------")
     print(f"Starting aggregation for {len(aoi)} polygons")
@@ -383,27 +439,31 @@ def aggregate(polygons_path, icesat_df, gedi_df):
     aoi["polygon_id"] = range(0, len(aoi)) # changed this to start index at 0
 
     #Assigning polygon ids to Lidar csvs
-    def assign_polygon_ids(df, aoi_gdf, satellite_name):
+    def assign_polygon_ids(df, aoi_gdf, radius):
 
         #Convert Lidar points to GeoDataFrame
         gdf = gpd.GeoDataFrame(
             df,
             geometry=gpd.points_from_xy(df.longitude, df.latitude),
-            crs=aoi_gdf.crs
+            crs="EPSG:4326"
         )
 
-        #Spatial join by polygon_id
-        joined = gpd.sjoin(gdf, aoi_gdf[["polygon_id", "geometry"]], how="inner")
+        # project points for distance calculations
+        gdf.to_crs(aoi_gdf.crs, inplace=True)
+
+        #Spatial join by polygon_id, within a radius
+        #joined = gpd.sjoin(gdf, aoi_gdf[["polygon_id", "geometry"]], how="inner") # remove dwithin join for very large datasets to save time
+        joined = gpd.sjoin(gdf, aoi_gdf[["polygon_id", "geometry"]], how="inner", predicate="dwithin", distance=radius)
+
+        print(f"{len(joined)} intersecting observations were found")
 
         #Drop geometry for clean DataFrame
         return pd.DataFrame(joined.drop(columns="geometry"))
     
-    #Reading the csv
-    #icesat_df = pd.read_csv("icesat.csv")
-    #gedi_df = pd.read_csv("gedi.csv")
+    joined = assign_polygon_ids(df, aoi, radius)
 
-    icesat_joined = assign_polygon_ids(icesat_df, aoi, "ICESat-2")
-    gedi_joined = assign_polygon_ids(gedi_df, aoi, "GEDI")
+    # for testing
+    #joined.to_csv("agg_test.csv")
 
     #
     def aggregate_by_polygon(df, stats, satellite_name):
@@ -431,19 +491,12 @@ def aggregate(polygons_path, icesat_df, gedi_df):
     #Running aggregation
     stats = ["mean", "min", "max", "std"]
 
-    icesat_agg = aggregate_by_polygon(icesat_joined, stats, "ICESat-2")
-    gedi_agg = aggregate_by_polygon(gedi_joined, stats, "GEDI")
-
-
-    # export to csv for testing purposes
-    #icesat_agg.to_csv("icesat_agg.csv")
-    #gedi_agg.to_csv("gedi_agg.csv")
+    agg = aggregate_by_polygon(joined, stats, satellite_name)
 
     print("Aggregation complete")
 
-    return icesat_agg, gedi_agg
+    return agg
     
-
 # compare
 def compare_data(icesat_agg, gedi_agg):
     """
@@ -486,9 +539,8 @@ def compare_data(icesat_agg, gedi_agg):
 
     return df3
 
-
-# format and export
-def export(icesat_agg, gedi_agg, compared, polygons_path, out_dir, config_dict):
+# format and export for when data for both ICESat-2 ATL08 and GEDI L2A is available
+def export(icesat_agg, gedi_agg, compared, config_dict):
     """
     Format and export the aggregated and compared results as .shp, .csv, and/or .parquet
 
@@ -502,12 +554,6 @@ def export(icesat_agg, gedi_agg, compared, polygons_path, out_dir, config_dict):
         Aggregated GEDI L2A data
     compared : Pandas DataFrame
         Comparison DataFrame of ICESat-2 ATL08 and GEDI L2A aggregated data
-    polygons_path : string
-        Path pointing to input geometry
-    file_formats : list
-        list of file formats as strings
-    out_dir : string
-        Path pointing to directory where outputs are written
     config_dict : dictionary
         dictionary of parameters 
 
@@ -516,22 +562,17 @@ def export(icesat_agg, gedi_agg, compared, polygons_path, out_dir, config_dict):
     None
     """
 
-    ### NEEDS TESTING
-
     print("---------------------------------")
     print("Starting export")
+
+    # read configurations
+    polygons_path = config_dict['PolygonsPath']
+    out_dir = config_dict['OutputDir']
 
     # read output configurations, convert to boolean
     out_csv = (config_dict['OutputCSV'] == 'True')
     out_shp = (config_dict['OutputShapefile'] == 'True')
     out_parquet = (config_dict['OutputParquet'] == 'True')
-
-    # fix polygon ID for comparison df
-    '''
-    compared = compared.reset_index()
-    compared['polygon_id'] = compared['index'] + 1
-    compared.drop(columns=['index'])
-    '''
 
     # export to csv
     if out_csv:
@@ -559,9 +600,115 @@ def export(icesat_agg, gedi_agg, compared, polygons_path, out_dir, config_dict):
         # TO DO -> rename columns to avoid ambiguity from truncation when exporting as shp
 
         # export as shp
-        ice_agg_gdf.to_file((out_dir + '/icesat_agg.shp'))
+        ice_agg_gdf.to_file((out_dir + '/icesat_agg.shp')) # columns not renamed, will be truncated
         gedi_agg_gdf.to_file((out_dir + '/gedi_agg.shp'))
         comp_gdf.to_file((out_dir + '/comparison.shp'))
+
+    print("Exporting complete")
+
+# format and export for ICESat-2 only
+def export_ATL08(icesat_agg, config_dict):
+    """
+    Format and export the aggregated ICESat-2 ATL08 results as .shp, .csv, and/or .parquet
+
+    @author: Vincent Ribberink
+
+    Parameters
+    ----------
+    icesat_agg : Pandas DataFrame
+        Aggregated ICESat-2 ATL08 data
+    config_dict : dictionary
+        dictionary of parameters 
+
+    Returns
+    -------
+    None
+    """
+
+    print("---------------------------------")
+    print("Starting export")
+
+    # read configurations
+    polygons_path = config_dict['PolygonsPath']
+    out_dir = config_dict['OutputDir']
+
+    # read output configurations, convert to boolean
+    out_csv = (config_dict['OutputCSV'] == 'True')
+    out_shp = (config_dict['OutputShapefile'] == 'True')
+    out_parquet = (config_dict['OutputParquet'] == 'True')
+
+    # export to csv
+    if out_csv:
+        icesat_agg.to_csv((out_dir + '/icesat_agg.csv'))
+
+    # export to parquet
+    if out_parquet:
+        icesat_agg.to_parquet((out_dir + '/icesat_agg.parquet'))
+
+    if out_shp:
+
+        # read geometry
+        geom_gdf = gpd.read_file(polygons_path)
+        geom = geom_gdf.geometry
+
+        # convert to geodataframes
+        ice_agg_gdf = gpd.GeoDataFrame(icesat_agg, geometry=geom)
+
+        # export as shp
+        ice_agg_gdf.to_file((out_dir + '/icesat_agg.shp')) # columns not renamed, will be truncated
+
+
+    print("Exporting complete")
+
+# format and export for GEDI L2A only
+def export_GEDI02_A(gedi_agg, config_dict):
+    """
+    Format and export the aggregated GEDI L2A results as .shp, .csv, and/or .parquet
+
+    @author: Vincent Ribberink
+
+    Parameters
+    ----------
+    gedi_agg : Pandas DataFrame
+        Aggregated GEDI L2A data
+    config_dict : dictionary
+        dictionary of parameters 
+
+    Returns
+    -------
+    None
+    """
+
+    print("---------------------------------")
+    print("Starting export")
+
+    # read configurations
+    polygons_path = config_dict['PolygonsPath']
+    out_dir = config_dict['OutputDir']
+
+    # read output configurations, convert to boolean
+    out_csv = (config_dict['OutputCSV'] == 'True')
+    out_shp = (config_dict['OutputShapefile'] == 'True')
+    out_parquet = (config_dict['OutputParquet'] == 'True')
+
+    # export to csv
+    if out_csv:
+        gedi_agg.to_csv((out_dir + '/gedi_agg.csv'))
+
+    # export to parquet
+    if out_parquet:
+        gedi_agg.to_parquet((out_dir + '/gedi_agg.parquet'))
+
+    if out_shp:
+        # read geometry
+        geom_gdf = gpd.read_file(polygons_path)
+        geom = geom_gdf.geometry
+
+        # convert to geodataframes
+        gedi_agg_gdf = gpd.GeoDataFrame(gedi_agg, geometry=geom)
+
+        # export as shp
+        gedi_agg_gdf.to_file((out_dir + '/gedi_agg.shp')) # columns not renamed, will be truncated
 
     print("Exporting complete")
 
@@ -579,45 +726,68 @@ def main():
     None.
     """
 
+    #################
+    # TESTING SETUP #
+    import os
+    # change this to the appropriate sample 
+    os.chdir("sample_polygons/Alfred_Bog")
+    # TESTING SETUP #
+    #################
+
+
+    ### SETUP ###
+
     # read config
     config_dict = read_config("config_process_sat_lidar.txt")
 
     # unpack parameters
     polygons_path = config_dict['PolygonsPath']
     download_dir = config_dict['DownloadDir']
-    output_dir = config_dict['OutputDir']
     beam_type = config_dict['BeamType']
     night_only = config_dict['NightOnly']
     quality_flag = config_dict['QualityFlag']
-  
-    # check existing granules in the download directory
-    ATL08_granules = list(Path(download_dir).glob("ATL08*.h5"))
-    GEDI02_A_granules = list(Path(download_dir).glob("GEDI02_A*.h5"))
+    short_name = config_dict['ShortName']
 
-    # exit if download directory is empty
-    if len(ATL08_granules) + len(GEDI02_A_granules) == 0:
-        raise FileNotFoundError("No granules were found in download directory")
+    print("---------------------------------")
+
+    # get info on downloaded granules
+    ATL08_granules, GEDI02_A_granules, icesat_only, gedi_only = download_check(download_dir, short_name)
+
+
+    ### FILTER & CONVERT ###
+
+    if not gedi_only:
+        # convert and filter ICESat-2 ATL08 h5 files to pandas dataframes
+        icesat_df = convert_icesat(ATL08_granules, beam_type, night_only)
+        print("ICESat-2 ATL08 granules complete")
+        # aggregate by polygon
+        icesat_agg = aggregate(polygons_path, icesat_df, "Icesat", 8) # 8 meter radius circles
+
+    if not icesat_only:
+        # convert and GEDI L2A GEDI L2A h5 files to pandas dataframes
+        gedi_df = convert_gedi(GEDI02_A_granules, quality_flag)
+        print("GEDI L2A granules complete")
+        # aggregate by polygon
+        gedi_agg = aggregate(polygons_path, gedi_df, "Gedi", 12.5) # 12.5 meter radius circles
+ 
+
+    ### COMPARE ###
+
+    # if both ATL08 and GEDI02_A are present, run the comparison
+    if not (icesat_only | gedi_only):
+        compared = compare_data(icesat_agg, gedi_agg)
+
+
+    ### FORMAT & EXPORT ###
+
+    if icesat_only:
+        export_ATL08(icesat_agg, config_dict)
+    elif gedi_only:
+        export_GEDI02_A(gedi_agg, config_dict)
+    else:
+        export(icesat_agg, gedi_agg, compared, config_dict)
     
     print("---------------------------------")
-    print(f"{len(ATL08_granules)} ATL08 granules found")
-    print(f"{len(GEDI02_A_granules)} GEDI02_A granules found")
-
-    ### run appropriate h5 conversions
-    # ICESat-2 ATL08
-    icesat_df = convert_icesat(ATL08_granules, beam_type, night_only)
-    print("ICESat-2 ATL08 granules complete")
-    # GEDI L2A
-    gedi_df = convert_gedi(GEDI02_A_granules, quality_flag)
-    print("GEDI L2A granules complete")
- 
-    # aggregate by polygon
-    icesat_agg, gedi_agg = aggregate(polygons_path, icesat_df, gedi_df)
-
-    # run comparison
-    compared = compare_data(icesat_agg, gedi_agg)
-
-    # format and export
-    export(icesat_agg, gedi_agg, compared, polygons_path, output_dir, config_dict)
 
 if __name__ == "__main__":
     main()

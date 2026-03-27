@@ -1,0 +1,38 @@
+[INPUT]
+
+;Path to the input polygon(s) geometry file (common geospatial formats)
+PolygonsPath = Alfred_Bog.kmz
+
+;Path to the directory where data granules will be downloaded
+DownloadDir = download_dir
+
+;Short name of the Earthdata product to download (ATL08, GEDI02_A, both)
+ShortName = GEDI02_A
+
+;Date range for the earthdata query
+StartDate = 2020-01-01
+EndDate = 2021-03-01
+
+
+[ATL08]
+
+;Beam type filter (strong, weak, all)
+BeamType = strong
+
+;Night flag filter
+NightOnly = True
+
+
+[GEDI02_A]
+QualityFlag = False
+
+
+[OUTPUT]
+
+;Path to the directory where aggregated files will be written
+OutputDir = output
+
+;Output file format options
+OutputCSV = True
+OutputParquet = True
+OutputShapefile = False

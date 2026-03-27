@@ -1,17 +1,17 @@
 [INPUT]
 
 ;Path to the input polygon(s) geometry file (common geospatial formats)
-PolygonsPath = polygon_peat_sample.kmz
+PolygonsPath = Westport.kmz
 
 ;Path to the directory where data granules will be downloaded
 DownloadDir = download_dir
 
 ;Short name of the Earthdata product to download (ATL08, GEDI02_A, both)
-ShortName = ATL08
+ShortName = both
 
 ;Date range for the earthdata query
-StartDate = 2016-01-01
-EndDate = 2026-06-01
+StartDate = 2021-01-01
+EndDate = 2022-01-01
 
 
 [ATL08]
@@ -24,7 +24,7 @@ NightOnly = True
 
 
 [GEDI02_A]
-QualityFlag = False
+QualityFlag = True
 
 
 [OUTPUT]
@@ -35,4 +35,4 @@ OutputDir = output
 ;Output file format options
 OutputCSV = True
 OutputParquet = True
-OutputShapefile = True
+OutputShapefile = False
