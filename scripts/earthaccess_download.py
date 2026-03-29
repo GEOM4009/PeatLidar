@@ -1,14 +1,14 @@
 # Download H5 granules from NASA 
-# developed as part of a final project for GEOM 4009
+# developed as part of the PeatLidar final project for GEOM 4009
 
 # Author: Vincent Ribberink
 
-# earthaccess.login() -> keeps a .netrc file of credentials
-    # remove "persist=True" if you want to avoid saving credentials locally
+# earthaccess.login() -> uses an interactive login
+    # change "persist=False" to True if you want to save credentials locally (.netrc file)
 
 import earthaccess 
 import geopandas as gpd
-import shapely
+#import shapely # used for downloading polygon by polygon in (not used by default)
 from pathlib import Path
 from process_sat_lidar import read_config
 
@@ -32,7 +32,7 @@ def authenticate(status_check=False):
 
     print("Authenticating...")
 
-    earthaccess.login(persist=True)
+    earthaccess.login(persist=False)
 
     # check status before starting -> slow and probably not necessary
     if status_check == True:

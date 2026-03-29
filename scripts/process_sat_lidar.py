@@ -1,4 +1,6 @@
-# all code combined
+##### process_sat_lidar.py #####
+# reads and aggregates ICESat-2 ATL08 and GEDI L2A satellite lidar data
+# this does not download any data, please use earthaccess_download.py
 
 import pandas as pd
 import geopandas as gpd
@@ -7,13 +9,13 @@ import configparser
 from pathlib import Path
 from datetime import datetime
 
-### read config
+### read and validate configuration
 def read_config(config_path):
     
     """
     Read and validate parameters from a config file.
     Config file must be written in .ini format, though the file can be .txt
-    Based on ConfigParser user guide
+    Based on ConfigParser user guide: https://docs.python.org/3/library/configparser.html#quick-start
 
     @author: Vincent Ribberink
 
@@ -25,7 +27,7 @@ def read_config(config_path):
     Returns
     -------
     config_dict (dictionary): 
-        Dictionary containing the validated parameters
+        Dictionary containing the validated parameters as strings
     """
 
     # initialize config parser
@@ -220,11 +222,13 @@ def download_check(download_dir, short_name):
 
     return ATL08_granules, GEDI02_A_granules, icesat_only, gedi_only
 
-# filter and extract ICESat-2 vegetation height
+# filter and extract ICESat-2 canopy height data
 def convert_icesat(granules, beam_type, night_only):
     """
-    Converts ICESat data from h5 files to dataframes
-    Based on Xarray documentation examples
+    Converts ICESat data from h5 files to Pandas DataFrames
+    Extracts lat/long, canopy height and uncertainty
+    Filters observations based on strong/weak beams and night flag (see config file)
+    Based on Xarray documentation examples, altered for use with Pandas Dataframes
 
     @authors: Vincent Ribberink, Joshua Salvador
 
@@ -235,7 +239,8 @@ def convert_icesat(granules, beam_type, night_only):
 
     Returns
     -------
-    None
+    final : Pandas DataFrame
+        Contains extracted and filtered observations
     """
 
     print("---------------------------------")
@@ -336,14 +341,14 @@ def convert_icesat(granules, beam_type, night_only):
     print(f"{len(final)} filtered observations returned")
 
     # export to csv for testing purposes
-    final.to_csv("icesat.csv")
+    #final.to_csv("icesat.csv")
 
     return final
 
 # filter and extract GEDI vegetation height
 def convert_gedi(granules, quality_flag):
     """
-    Converts GEDI files from h5 to dataframes
+    Converts GEDI L2A files from h5 to Pandas DataFrames
 
     @author: Joshua Salvador (lead), Vincent Ribberink
 
@@ -354,7 +359,8 @@ def convert_gedi(granules, quality_flag):
 
     Returns
     -------
-    None
+    final_df : Pandas DataFrame
+        Contains extracted and filtered observations
     """
 
     print("---------------------------------")
@@ -395,7 +401,12 @@ def convert_gedi(granules, quality_flag):
                             'quality': qual
                         })
         
-                        df2 = df.loc[df.quality==1]
+                        # quality filter if set in config file
+                        if quality_flag:
+                            df2 = df.loc[df.quality==1]
+                        
+                        else:
+                            df2 = df.copy()
                         
                         all_data.append(df2)
         
@@ -424,10 +435,17 @@ def aggregate(polygons_path, df, satellite_name, radius):
     ----------
     polygon_path : string
         Path pointing to input geometry
+    df : Pandas DataFrame
+        Extracted and filtered observations
+    satellite_name : string
+        Either "Icesat" or "GEDI"
+    radius : int
+        radius (m) for the dwithin spatial join
 
     Returns
     -------
-    None
+    agg: Pandas DataFrame
+        Aggregated Results
     """
     crs = "EPSG:3347" # stat can lambert
     aoi = gpd.read_file(polygons_path).to_crs(crs)
@@ -452,8 +470,8 @@ def aggregate(polygons_path, df, satellite_name, radius):
         gdf.to_crs(aoi_gdf.crs, inplace=True)
 
         #Spatial join by polygon_id, within a radius
-        #joined = gpd.sjoin(gdf, aoi_gdf[["polygon_id", "geometry"]], how="inner") # remove dwithin join for very large datasets to save time
-        joined = gpd.sjoin(gdf, aoi_gdf[["polygon_id", "geometry"]], how="inner", predicate="dwithin", distance=radius)
+        joined = gpd.sjoin(gdf, aoi_gdf[["polygon_id", "geometry"]], how="inner", predicate="dwithin", distance=radius) 
+            # remove dwithin for very large inputs to save processing time 
 
         print(f"{len(joined)} intersecting observations were found")
 
@@ -462,7 +480,7 @@ def aggregate(polygons_path, df, satellite_name, radius):
     
     joined = assign_polygon_ids(df, aoi, radius)
 
-    # for testing
+    # export for testing
     #joined.to_csv("agg_test.csv")
 
     #
@@ -506,12 +524,15 @@ def compare_data(icesat_agg, gedi_agg):
 
     Parameters
     ----------
-    df : dataframe
-        dataframe containing both ICESat and GEDI data
+    icesat_agg : dataframe
+        dataframe containing ICESat-2 ATL08 data
+    gedi_agg : dataframe
+        dataframe containing ICESat-2 ATL08 data
 
     Returns
     -------
-    None
+    df3: dataframe
+        all compared results
     """
 
     print("---------------------------------")
@@ -612,6 +633,7 @@ def export(icesat_agg, gedi_agg, compared, config_dict):
     print("Exporting complete")
 
 # format and export for ICESat-2 only
+# there is probably a better way to combine all 3 export functions, but this works
 def export_ATL08(icesat_agg, config_dict):
     """
     Format and export the aggregated ICESat-2 ATL08 results as .shp, .csv, and/or .parquet
@@ -723,6 +745,7 @@ def main():
     """
     Run the process_sat_lidar script.
     This does not download the granules from NASA - use earthaccess_download.py
+    Input geometries, output directory, and chosen filters are written in the config  file (default: config_process_sat_lidar.txt) 
 
     @author: Vincent Ribberink
 
@@ -733,9 +756,9 @@ def main():
 
     #################
     # TESTING SETUP #
-    import os
+    #import os
     # change this to the appropriate sample 
-    os.chdir("sample_polygons/Alfred_Bog")
+    #os.chdir("sample_polygons/Alfred_Bog")
     # TESTING SETUP #
     #################
 
