@@ -531,6 +531,11 @@ def compare_data(icesat_agg, gedi_agg):
     df3["max_diff"]= df3["icesat_canopy_max"] - df3["gedi_canopy_max"]
     df3["min_diff"] = df3["icesat_canopy_min"] - df3["gedi_canopy_min"]
     df3["std_diff"] = df3["icesat_canopy_std"] - df3["gedi_canopy_std"]
+
+    # Calculate percent difference with mean
+    diff = abs(df3["icesat_canopy_mean"] - df3["gedi_canopy_mean"])
+    avg = (df3["icesat_canopy_mean"] + df3["gedi_canopy_mean"]) / 2
+    df3["percent_diff"] = (diff / avg) * 100 
     
     # Export as CSV for testing purposes
     df3.to_csv("comparison.csv", index=False)
