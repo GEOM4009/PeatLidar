@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scripts.process_sat_lidar &#8212; PeatLidar 1.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../_static/documentation_options.js?v=8d563738"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for scripts.process_sat_lidar</h1><div class="highlight"><pre>
+<span></span><span class="c1"># all code combined</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">geopandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">configparser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="c1">### read config</span>
+<div class="viewcode-block" id="read_config">
+<a class="viewcode-back" href="../../scripts.html#scripts.process_sat_lidar.read_config">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_config</span><span class="p">(</span><span class="n">config_path</span><span class="p">):</span>
+<span class="w">    </span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Read and validate parameters from a config file.</span>
+<span class="sd">    Config file must be written in .ini format, though the file can be .txt</span>
+<span class="sd">    Based on ConfigParser user guide</span>
+
+<span class="sd">    @author: Vincent Ribberink</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    config_path : string</span>
+<span class="sd">        Path pointing to the config file </span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    config_dict (dictionary): </span>
+<span class="sd">        Dictionary containing the validated parameters</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># initialize config parser</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">configparser</span><span class="o">.</span><span class="n">ConfigParser</span><span class="p">()</span>
+
+    <span class="c1"># read config file</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">config_path</span><span class="p">)</span>
+
+    <span class="c1">### read in parameters </span>
+
+    <span class="c1"># INPUT</span>
+    <span class="n">PolygonsPath</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;INPUT&#39;</span><span class="p">][</span><span class="s1">&#39;PolygonsPath&#39;</span><span class="p">]</span>
+    <span class="n">DownloadDir</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;INPUT&#39;</span><span class="p">][</span><span class="s1">&#39;DownloadDir&#39;</span><span class="p">]</span>
+    <span class="n">ShortName</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;INPUT&#39;</span><span class="p">][</span><span class="s1">&#39;ShortName&#39;</span><span class="p">]</span>
+    <span class="n">StartDate</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;INPUT&#39;</span><span class="p">][</span><span class="s1">&#39;StartDate&#39;</span><span class="p">]</span>
+    <span class="n">EndDate</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;INPUT&#39;</span><span class="p">][</span><span class="s1">&#39;EndDate&#39;</span><span class="p">]</span>
+
+    <span class="c1"># ATL08</span>
+    <span class="n">BeamType</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;ATL08&#39;</span><span class="p">][</span><span class="s1">&#39;BeamType&#39;</span><span class="p">]</span>
+    <span class="n">NightOnly</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;ATL08&#39;</span><span class="p">][</span><span class="s1">&#39;NightOnly&#39;</span><span class="p">]</span>
+
+    <span class="c1"># GEDI02_A</span>
+    <span class="n">QualityFlag</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;GEDI02_A&#39;</span><span class="p">][</span><span class="s1">&#39;QualityFlag&#39;</span><span class="p">]</span>
+
+    <span class="c1"># OUTPUT</span>
+    <span class="n">OutputDir</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;OUTPUT&#39;</span><span class="p">][</span><span class="s1">&#39;OutputDir&#39;</span><span class="p">]</span>
+    <span class="n">OutputCSV</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;OUTPUT&#39;</span><span class="p">][</span><span class="s1">&#39;OutputCSV&#39;</span><span class="p">]</span>
+    <span class="n">OutputShapefile</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;OUTPUT&#39;</span><span class="p">][</span><span class="s1">&#39;OutputShapefile&#39;</span><span class="p">]</span>
+    <span class="n">OutputParquet</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;OUTPUT&#39;</span><span class="p">][</span><span class="s1">&#39;OutputParquet&#39;</span><span class="p">]</span>
+
+
+    <span class="c1">##################</span>
+    <span class="c1">### Validation ###</span>
+    <span class="c1">##################</span>
+
+    <span class="c1">#################</span>
+    <span class="c1">### Input</span>
+
+    <span class="c1"># geometry</span>
+    <span class="k">if</span> <span class="n">Path</span><span class="p">(</span><span class="n">PolygonsPath</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="o">==</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">&quot;input geometry filepath is invalid&quot;</span><span class="p">)</span>
+
+    <span class="c1"># download directory</span>
+    <span class="k">if</span> <span class="n">Path</span><span class="p">(</span><span class="n">DownloadDir</span><span class="p">)</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="o">==</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">&quot;input download directory is invalid or does not exist&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># short name </span>
+    <span class="k">if</span> <span class="n">ShortName</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;ATL08&#39;</span><span class="p">,</span> <span class="s1">&#39;GEDI02_A&#39;</span><span class="p">,</span> <span class="s1">&#39;both&#39;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Input short name is invalid&quot;</span><span class="p">)</span>
+
+    <span class="c1"># date range</span>
+    <span class="nb">format</span> <span class="o">=</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_date_str_format</span><span class="p">(</span><span class="n">date_str</span><span class="p">,</span> <span class="nb">format</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        check if a date string matches a given format</span>
+<span class="sd">        based on example from https://www.geeksforgeeks.org/python/python-validate-string-date-format/</span>
+
+<span class="sd">        @author: Vincent Ribberink</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        date_str : string</span>
+<span class="sd">            date string to validate</span>
+<span class="sd">        format : string</span>
+<span class="sd">            format usable by datetime (e.g. &quot;%Y-%m-%d&quot;)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        None. Raises ValueError if date_str doesn&#39;t match format</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">date_str</span><span class="p">,</span> <span class="nb">format</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">valid</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;one or more input dates are invalid. please use YYYY-MM-DD format&quot;</span><span class="p">)</span>
+
+    <span class="n">validate_date_str_format</span><span class="p">(</span><span class="n">StartDate</span><span class="p">,</span> <span class="nb">format</span><span class="p">)</span>
+    <span class="n">validate_date_str_format</span><span class="p">(</span><span class="n">StartDate</span><span class="p">,</span> <span class="nb">format</span><span class="p">)</span>
+
+    <span class="c1">#################</span>
+    <span class="c1">### ATL08</span>
+
+    <span class="c1"># ATL08 beam type </span>
+    <span class="k">if</span> <span class="n">BeamType</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;strong&#39;</span><span class="p">,</span> <span class="s1">&#39;weak&#39;</span><span class="p">,</span> <span class="s1">&#39;all&#39;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;input ATL08 beam type is invalid. Please use one of (strong, weak, both)&quot;</span><span class="p">)</span>
+
+    <span class="c1"># ATL08 night flag -&gt; check values first</span>
+    <span class="k">if</span> <span class="n">NightOnly</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;True&quot;</span><span class="p">,</span> <span class="s2">&quot;False&quot;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Night flag parameter is invalid. Please use one of (True, False))&quot;</span><span class="p">)</span>
+
+    <span class="c1">#################</span>
+    <span class="c1">### GEDI02_A</span>
+
+    <span class="c1"># GEDI02_A quality flag -&gt; check values first</span>
+
+    <span class="c1">#################</span>
+    <span class="c1">### Output</span>
+
+    <span class="c1"># Output directory</span>
+    <span class="k">if</span> <span class="n">Path</span><span class="p">(</span><span class="n">OutputDir</span><span class="p">)</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="o">==</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">&quot;input download directory is invalid or does not exist&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Output Formats</span>
+    <span class="k">for</span> <span class="n">out_format</span> <span class="ow">in</span> <span class="p">[</span><span class="n">OutputCSV</span><span class="p">,</span> <span class="n">OutputShapefile</span><span class="p">,</span> <span class="n">OutputParquet</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">out_format</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;True&quot;</span><span class="p">,</span> <span class="s2">&quot;False&quot;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;one or more output format parameters are invalid. Please use one of (True, False))&quot;</span><span class="p">)</span>
+
+    <span class="c1"># format date range for output</span>
+    <span class="n">date_range</span> <span class="o">=</span> <span class="p">(</span><span class="n">StartDate</span><span class="p">,</span> <span class="n">EndDate</span><span class="p">)</span>
+
+    <span class="c1"># create config dictionary</span>
+    <span class="n">config_dict</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;PolygonsPath&#39;</span> <span class="p">:</span> <span class="n">PolygonsPath</span><span class="p">,</span>
+        <span class="s1">&#39;DownloadDir&#39;</span> <span class="p">:</span> <span class="n">DownloadDir</span><span class="p">,</span>
+        <span class="s1">&#39;ShortName&#39;</span> <span class="p">:</span> <span class="n">ShortName</span><span class="p">,</span>
+        <span class="s1">&#39;DateRange&#39;</span> <span class="p">:</span> <span class="n">date_range</span><span class="p">,</span>
+        <span class="s1">&#39;BeamType&#39;</span> <span class="p">:</span> <span class="n">BeamType</span><span class="p">,</span>
+        <span class="s1">&#39;NightOnly&#39;</span> <span class="p">:</span> <span class="n">NightOnly</span><span class="p">,</span>
+        <span class="s1">&#39;QualityFlag&#39;</span> <span class="p">:</span> <span class="n">QualityFlag</span><span class="p">,</span>
+        <span class="s1">&#39;OutputDir&#39;</span> <span class="p">:</span> <span class="n">OutputDir</span><span class="p">,</span>
+        <span class="s1">&#39;OutputCSV&#39;</span> <span class="p">:</span> <span class="n">OutputCSV</span><span class="p">,</span>
+        <span class="s1">&#39;OutputShapefile&#39;</span> <span class="p">:</span> <span class="n">OutputShapefile</span><span class="p">,</span>
+        <span class="s1">&#39;OutputParquet&#39;</span> <span class="p">:</span> <span class="n">OutputParquet</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;---------------------------------&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Config validated!&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">config_dict</span></div>
+
+
+<span class="c1"># get important info on downloaded granules (number, short name)</span>
+<div class="viewcode-block" id="download_check">
+<a class="viewcode-back" href="../../scripts.html#scripts.process_sat_lidar.download_check">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">download_check</span><span class="p">(</span><span class="n">download_dir</span><span class="p">,</span> <span class="n">short_name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Prints important information about the granules in the download directory</span>
+
+<span class="sd">    @author: Vincent Ribberink</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    download_dir : String</span>
+<span class="sd">        string path to the directory containing downloaded ATL08 and GEDI02_A .h5 granules</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    icesat_only (bool):</span>
+<span class="sd">        True if only ATL08 granules are found</span>
+<span class="sd">    gedi_only (bool):</span>
+<span class="sd">        True if only GEDI02_A granules are found</span>
+<span class="sd">    ATL08_granules (list):</span>
+<span class="sd">        List of ICESat-2 ATL08 granules in download directory</span>
+<span class="sd">    GEDI02_A_granules (list):</span>
+<span class="sd">        List of GEDI L2A granules in download directory</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># check existing granules in the download directory</span>
+    <span class="n">ATL08_granules</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">download_dir</span><span class="p">)</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;ATL08*.h5&quot;</span><span class="p">))</span>
+    <span class="n">GEDI02_A_granules</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">download_dir</span><span class="p">)</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;GEDI02_A*.h5&quot;</span><span class="p">))</span>
+        
+    <span class="n">icesat_only</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">gedi_only</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="c1"># override with short name if given -&gt; prevents unnecessary converting and filtering</span>
+    <span class="k">if</span> <span class="n">short_name</span> <span class="o">==</span> <span class="s1">&#39;ATL08&#39;</span><span class="p">:</span>
+        <span class="n">icesat_only</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="c1"># exit if download dir is empty</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ATL08_granules</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">&quot;No granules were found in download directory&quot;</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">short_name</span> <span class="o">==</span> <span class="s1">&#39;GEDI02_A&#39;</span><span class="p">:</span>
+        <span class="n">gedi_only</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="c1"># exit if download dir is empty</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">GEDI02_A_granules</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">&quot;No granules were found in download directory&quot;</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># if 0 granules are found for 1 or more short names</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">GEDI02_A_granules</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># exit if download directory is empty</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ATL08_granules</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">&quot;No granules were found in download directory&quot;</span><span class="p">)</span>
+            <span class="c1"># otherwise continue with only ATL08</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ATL08_granules</span><span class="p">)</span><span class="si">}</span><span class="s2"> ATL08 granules found&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;0 GEDI L2A granules found in download directory. No comparison outputs will be created.&quot;</span><span class="p">)</span>
+            <span class="n">icesat_only</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">ATL08_granules</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">GEDI02_A_granules</span><span class="p">)</span><span class="si">}</span><span class="s2"> GEDI02_A granules found&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;0 ICESat-2 ATL08 granules found in download directory. No comparison outputs will be created.&quot;</span><span class="p">)</span>
+            <span class="n">gedi_only</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1"># if granules are found for both short names</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ATL08_granules</span><span class="p">)</span><span class="si">}</span><span class="s2"> ATL08 granules found&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">GEDI02_A_granules</span><span class="p">)</span><span class="si">}</span><span class="s2"> GEDI02_A granules found&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ATL08_granules</span><span class="p">,</span> <span class="n">GEDI02_A_granules</span><span class="p">,</span> <span class="n">icesat_only</span><span class="p">,</span> <span class="n">gedi_only</span></div>
+
+
+<span class="c1"># filter and extract ICESat-2 vegetation height</span>
+<div class="viewcode-block" id="convert_icesat">
+<a class="viewcode-back" href="../../scripts.html#scripts.process_sat_lidar.convert_icesat">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_icesat</span><span class="p">(</span><span class="n">granules</span><span class="p">,</span> <span class="n">beam_type</span><span class="p">,</span> <span class="n">night_only</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts ICESat data from h5 files to dataframes</span>
+<span class="sd">    Based on Xarray documentation examples</span>
+
+<span class="sd">    @authors: Vincent Ribberink, Joshua Salvador</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    test_files : list</span>
+<span class="sd">        List containing paths of ICESat-2 ATL08 .h5 granules</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;---------------------------------&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Started extracting ATL08 data&quot;</span><span class="p">)</span>
+
+    <span class="c1"># list of groups containing beam data</span>
+    <span class="n">beam_list</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;gt1l&quot;</span><span class="p">,</span> <span class="s2">&quot;gt2l&quot;</span><span class="p">,</span> <span class="s2">&quot;gt3l&quot;</span><span class="p">,</span> <span class="s2">&quot;gt1r&quot;</span><span class="p">,</span> <span class="s2">&quot;gt2r&quot;</span><span class="p">,</span> <span class="s2">&quot;gt3r&quot;</span><span class="p">]</span> <span class="c1"># groups in h5 file</span>
+
+    <span class="c1"># create empty list #1</span>
+    <span class="n">df_combined_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># iterate through h5 files in directory</span>
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">granules</span><span class="p">:</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            
+            <span class="c1"># read file with H5py</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        
+        <span class="k">except</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Skipping corrupted granule </span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="c1">### beam type filter</span>
+
+        <span class="c1"># if beam_type == all -&gt; continue</span>
+        
+        <span class="c1"># get orientation (backward/forward/transition, 0/1/2)</span>
+        <span class="n">orientation</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;orbit_info&#39;</span><span class="p">][</span><span class="s1">&#39;sc_orient&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># transition period -&gt; low quality data, skip</span>
+        <span class="k">if</span> <span class="n">orientation</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="k">if</span> <span class="n">beam_type</span> <span class="o">==</span> <span class="s2">&quot;strong&quot;</span><span class="p">:</span>
+            
+            <span class="c1"># forward orientation</span>
+            <span class="k">if</span> <span class="n">orientation</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="c1"># right beams are strong </span>
+                <span class="n">beam_list</span> <span class="o">=</span> <span class="n">beam_list</span><span class="p">[</span><span class="mi">3</span><span class="p">:]</span>
+
+            <span class="c1"># backwards orientation</span>
+            <span class="k">if</span> <span class="n">orientation</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># left beams are strong</span>
+                <span class="n">beam_list</span> <span class="o">=</span> <span class="n">beam_list</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">beam_type</span> <span class="o">==</span> <span class="s2">&quot;weak&quot;</span><span class="p">:</span>
+            
+            <span class="c1"># forward orientation</span>
+            <span class="k">if</span> <span class="n">orientation</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="c1"># left beams are weak </span>
+                <span class="n">beam_list</span> <span class="o">=</span> <span class="n">beam_list</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
+
+            <span class="c1"># backwards orientation</span>
+            <span class="k">if</span> <span class="n">orientation</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># right beams are weak</span>
+                <span class="n">beam_list</span> <span class="o">=</span> <span class="n">beam_list</span><span class="p">[</span><span class="mi">3</span><span class="p">:]</span>
+        
+        <span class="c1"># create empty list #2</span>
+        <span class="n">df_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># iterate through groups to find beam data</span>
+        <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">beam_list</span><span class="p">:</span>
+                
+                <span class="c1"># create pandas dataframe with canopy height, coordinates</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+                        <span class="s2">&quot;icesat_canopy&quot;</span> <span class="p">:</span> <span class="n">f</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s2">/land_segments/canopy/h_canopy&quot;</span><span class="p">][:],</span>
+                        <span class="s2">&quot;icesat_canopy_uncertainty&quot;</span> <span class="p">:</span> <span class="n">f</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s2">/land_segments/canopy/h_canopy_uncertainty&quot;</span><span class="p">][:],</span>
+                        <span class="s2">&quot;longitude&quot;</span> <span class="p">:</span> <span class="n">f</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s2">/land_segments/longitude&quot;</span><span class="p">][:],</span>
+                        <span class="s2">&quot;latitude&quot;</span> <span class="p">:</span> <span class="n">f</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s2">/land_segments/latitude&quot;</span><span class="p">][:],</span>
+                        <span class="s2">&quot;night_flag&quot;</span> <span class="p">:</span> <span class="n">f</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s2">/land_segments/night_flag&quot;</span><span class="p">][:],</span>
+                        <span class="s2">&quot;beam&quot;</span> <span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
+                <span class="p">})</span>
+
+                <span class="c1"># filter out invalid canopy heights (3.4 e38)</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;icesat_canopy&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">10000</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;icesat_canopy_uncertainty&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1000</span><span class="p">)]</span>
+
+                <span class="c1"># filter night flag</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">night_only</span> <span class="o">==</span> <span class="kc">True</span><span class="p">):</span>
+                    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;night_flag&#39;</span><span class="p">]</span><span class="o">==</span><span class="mi">1</span><span class="p">]</span>
+                
+                <span class="c1"># add to list #2</span>
+                <span class="n">df_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+        <span class="c1"># continue if no results are found</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">df_list</span><span class="p">:</span>
+            <span class="k">continue</span>      
+        <span class="c1"># concatenate all beams for a given file</span>
+        <span class="n">df_combined</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">df_list</span><span class="p">)</span>
+
+        <span class="c1"># add to list #1</span>
+        <span class="n">df_combined_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df_combined</span><span class="p">)</span>
+
+    <span class="c1"># concatenate all files</span>
+    <span class="n">final</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">df_combined_list</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">final</span><span class="p">)</span><span class="si">}</span><span class="s2"> filtered observations returned&quot;</span><span class="p">)</span>
+
+    <span class="c1"># export to csv for testing purposes</span>
+    <span class="n">final</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;icesat.csv&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">final</span></div>
+
+
+<span class="c1"># filter and extract GEDI vegetation height</span>
+<div class="viewcode-block" id="convert_gedi">
+<a class="viewcode-back" href="../../scripts.html#scripts.process_sat_lidar.convert_gedi">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_gedi</span><span class="p">(</span><span class="n">granules</span><span class="p">,</span> <span class="n">quality_flag</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts GEDI files from h5 to dataframes</span>
+
+<span class="sd">    @author: Joshua Salvador (lead), Vincent Ribberink</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    files : list</span>
+<span class="sd">        List containing paths of GEDI L2A .h5 granules</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;---------------------------------&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Started extracting GEDI02_A data&quot;</span><span class="p">)</span>
+
+    <span class="c1"># place all data in here</span>
+    <span class="n">all_data</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="c1"># look through each file</span>
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">granules</span><span class="p">:</span>
+        <span class="c1">#print(f&quot;Processing {file}&quot;)</span>
+
+        <span class="c1"># skip corrupted granules</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">beam_name</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="n">beam</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="n">beam_name</span><span class="p">]</span>
+        
+                    <span class="c1"># if beam contains data</span>
+                    <span class="k">if</span> <span class="s1">&#39;shot_number&#39;</span> <span class="ow">in</span> <span class="n">beam</span><span class="p">:</span>
+                        <span class="n">shot</span> <span class="o">=</span> <span class="n">beam</span><span class="p">[</span><span class="s1">&#39;shot_number&#39;</span><span class="p">][:]</span>
+                        <span class="n">rh</span> <span class="o">=</span> <span class="n">beam</span><span class="p">[</span><span class="s1">&#39;rh&#39;</span><span class="p">][:]</span>
+                        <span class="n">lat</span> <span class="o">=</span> <span class="n">beam</span><span class="p">[</span><span class="s1">&#39;geolocation/lat_lowestmode_a1&#39;</span><span class="p">][:]</span>
+                        <span class="n">lon</span> <span class="o">=</span> <span class="n">beam</span><span class="p">[</span><span class="s1">&#39;geolocation/lon_lowestmode_a1&#39;</span><span class="p">][:]</span>
+                        <span class="n">elev</span> <span class="o">=</span> <span class="n">beam</span><span class="p">[</span><span class="s1">&#39;elev_lowestmode&#39;</span><span class="p">][:]</span>
+                        <span class="n">qual</span> <span class="o">=</span> <span class="n">beam</span><span class="p">[</span><span class="s1">&#39;quality_flag&#39;</span><span class="p">][:]</span>
+        
+                        <span class="n">canopy_h</span> <span class="o">=</span> <span class="n">rh</span><span class="p">[:,</span><span class="mi">98</span><span class="p">]</span>
+        
+                        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+                            <span class="s1">&#39;file&#39;</span><span class="p">:</span> <span class="n">file</span><span class="p">,</span>
+                            <span class="s1">&#39;beam&#39;</span><span class="p">:</span> <span class="n">beam_name</span><span class="p">,</span>
+                            <span class="s1">&#39;shot_number&#39;</span><span class="p">:</span> <span class="n">shot</span><span class="p">,</span>
+                            <span class="s1">&#39;latitude&#39;</span><span class="p">:</span> <span class="n">lat</span><span class="p">,</span>
+                            <span class="s1">&#39;longitude&#39;</span><span class="p">:</span> <span class="n">lon</span><span class="p">,</span>
+                            <span class="s1">&#39;elevation&#39;</span><span class="p">:</span> <span class="n">elev</span><span class="p">,</span>
+                            <span class="s1">&#39;gedi_canopy&#39;</span><span class="p">:</span> <span class="n">canopy_h</span><span class="p">,</span>
+                            <span class="s1">&#39;quality&#39;</span><span class="p">:</span> <span class="n">qual</span>
+                        <span class="p">})</span>
+        
+                        <span class="n">df2</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">quality</span><span class="o">==</span><span class="mi">1</span><span class="p">]</span>
+                        
+                        <span class="n">all_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df2</span><span class="p">)</span>
+        
+        <span class="k">except</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Skipping corrupted granule: </span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">continue</span>
+                    
+    <span class="c1"># concatenate all data</span>
+    <span class="n">final_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">all_data</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">final_df</span><span class="p">)</span><span class="si">}</span><span class="s2"> filtered observations returned&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># convert to csv for testing purposes</span>
+    <span class="c1">#final_df.to_csv(&quot;gedi.csv&quot;, index=False)</span>
+
+    <span class="k">return</span> <span class="n">final_df</span></div>
+
+
+<span class="c1"># aggregate data by polygons</span>
+<div class="viewcode-block" id="aggregate">
+<a class="viewcode-back" href="../../scripts.html#scripts.process_sat_lidar.aggregate">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">aggregate</span><span class="p">(</span><span class="n">polygons_path</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">satellite_name</span><span class="p">,</span> <span class="n">radius</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts GEDI files from h5 to dataframes</span>
+
+<span class="sd">    @author: Ethan Gauthier (lead), Vincent Ribberink</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    polygon_path : string</span>
+<span class="sd">        Path pointing to input geometry</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">crs</span> <span class="o">=</span> <span class="s2">&quot;EPSG:3347&quot;</span> <span class="c1"># stat can lambert</span>
+    <span class="n">aoi</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">polygons_path</span><span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;---------------------------------&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Starting aggregation for </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">aoi</span><span class="p">)</span><span class="si">}</span><span class="s2"> polygons&quot;</span><span class="p">)</span>
+
+    <span class="c1">#Adding the polygon_id</span>
+    <span class="n">aoi</span><span class="p">[</span><span class="s2">&quot;polygon_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">aoi</span><span class="p">))</span> <span class="c1"># changed this to start index at 0</span>
+
+    <span class="c1">#Assigning polygon ids to Lidar csvs</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">assign_polygon_ids</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">aoi_gdf</span><span class="p">,</span> <span class="n">radius</span><span class="p">):</span>
+
+        <span class="c1">#Convert Lidar points to GeoDataFrame</span>
+        <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span>
+            <span class="n">df</span><span class="p">,</span>
+            <span class="n">geometry</span><span class="o">=</span><span class="n">gpd</span><span class="o">.</span><span class="n">points_from_xy</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">longitude</span><span class="p">,</span> <span class="n">df</span><span class="o">.</span><span class="n">latitude</span><span class="p">),</span>
+            <span class="n">crs</span><span class="o">=</span><span class="s2">&quot;EPSG:4326&quot;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># project points for distance calculations</span>
+        <span class="n">gdf</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">aoi_gdf</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1">#Spatial join by polygon_id, within a radius</span>
+        <span class="c1">#joined = gpd.sjoin(gdf, aoi_gdf[[&quot;polygon_id&quot;, &quot;geometry&quot;]], how=&quot;inner&quot;) # remove dwithin join for very large datasets to save time</span>
+        <span class="n">joined</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">sjoin</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> <span class="n">aoi_gdf</span><span class="p">[[</span><span class="s2">&quot;polygon_id&quot;</span><span class="p">,</span> <span class="s2">&quot;geometry&quot;</span><span class="p">]],</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span> <span class="n">predicate</span><span class="o">=</span><span class="s2">&quot;dwithin&quot;</span><span class="p">,</span> <span class="n">distance</span><span class="o">=</span><span class="n">radius</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">joined</span><span class="p">)</span><span class="si">}</span><span class="s2"> intersecting observations were found&quot;</span><span class="p">)</span>
+
+        <span class="c1">#Drop geometry for clean DataFrame</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">joined</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="s2">&quot;geometry&quot;</span><span class="p">))</span>
+    
+    <span class="n">joined</span> <span class="o">=</span> <span class="n">assign_polygon_ids</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">aoi</span><span class="p">,</span> <span class="n">radius</span><span class="p">)</span>
+
+    <span class="c1"># for testing</span>
+    <span class="c1">#joined.to_csv(&quot;agg_test.csv&quot;)</span>
+
+    <span class="c1">#</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">aggregate_by_polygon</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">stats</span><span class="p">,</span> <span class="n">satellite_name</span><span class="p">):</span>
+        <span class="c1">#Group by polygon</span>
+        <span class="n">grouped</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;polygon_id&quot;</span><span class="p">)</span>
+
+        <span class="c1">#Detect measurement columns</span>
+        <span class="n">measurement_cols</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span>
+            <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;icesat_canopy&quot;</span><span class="p">,</span> <span class="s2">&quot;icesat_canopy_uncertainty&quot;</span><span class="p">,</span> <span class="s2">&quot;gedi_canopy&quot;</span><span class="p">,</span> <span class="s2">&quot;elevation&quot;</span><span class="p">]</span>
+        <span class="p">]</span>
+
+        <span class="c1">#Compute stats</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">grouped</span><span class="p">[</span><span class="n">measurement_cols</span><span class="p">]</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="n">stats</span><span class="p">)</span>
+
+        <span class="c1">#Flatten multi-index columns</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;_&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">col</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+
+        <span class="c1">#Add satellite label</span>
+        <span class="n">result</span><span class="p">[</span><span class="s2">&quot;satellite&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">satellite_name</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+    
+    <span class="c1">#Running aggregation</span>
+    <span class="n">stats</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="s2">&quot;std&quot;</span><span class="p">]</span>
+
+    <span class="n">agg</span> <span class="o">=</span> <span class="n">aggregate_by_polygon</span><span class="p">(</span><span class="n">joined</span><span class="p">,</span> <span class="n">stats</span><span class="p">,</span> <span class="n">satellite_name</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Aggregation complete&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">agg</span></div>
+
+    
+<span class="c1"># compare</span>
+<div class="viewcode-block" id="compare_data">
+<a class="viewcode-back" href="../../scripts.html#scripts.process_sat_lidar.compare_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compare_data</span><span class="p">(</span><span class="n">icesat_agg</span><span class="p">,</span> <span class="n">gedi_agg</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compares ICESat canopy data with GEDI canopy data</span>
+
+<span class="sd">    @author: Joshua Salvador </span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df : dataframe</span>
+<span class="sd">        dataframe containing both ICESat and GEDI data</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;---------------------------------&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Starting comparison&quot;</span><span class="p">)</span>
+
+    <span class="c1">#Combine the stats into one</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">icesat_agg</span><span class="p">,</span> <span class="n">gedi_agg</span><span class="p">],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Merge duplicated polygon IDs</span>
+    <span class="n">df2</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;polygon_id&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+    
+    <span class="c1"># Make sure both icesat and gedi contains data</span>
+    <span class="n">df3</span> <span class="o">=</span> <span class="n">df2</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;icesat_canopy_mean&quot;</span><span class="p">,</span> <span class="s2">&quot;gedi_canopy_mean&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    
+    <span class="c1"># Calculate difference for icesat canopy height mean, max, min, std with gedi.</span>
+    <span class="n">df3</span><span class="p">[</span><span class="s2">&quot;mean_diff&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df3</span><span class="p">[</span><span class="s2">&quot;icesat_canopy_mean&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">df3</span><span class="p">[</span><span class="s2">&quot;gedi_canopy_mean&quot;</span><span class="p">]</span>
+    <span class="n">df3</span><span class="p">[</span><span class="s2">&quot;max_diff&quot;</span><span class="p">]</span><span class="o">=</span> <span class="n">df3</span><span class="p">[</span><span class="s2">&quot;icesat_canopy_max&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">df3</span><span class="p">[</span><span class="s2">&quot;gedi_canopy_max&quot;</span><span class="p">]</span>
+    <span class="n">df3</span><span class="p">[</span><span class="s2">&quot;min_diff&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df3</span><span class="p">[</span><span class="s2">&quot;icesat_canopy_min&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">df3</span><span class="p">[</span><span class="s2">&quot;gedi_canopy_min&quot;</span><span class="p">]</span>
+    <span class="n">df3</span><span class="p">[</span><span class="s2">&quot;std_diff&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df3</span><span class="p">[</span><span class="s2">&quot;icesat_canopy_std&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">df3</span><span class="p">[</span><span class="s2">&quot;gedi_canopy_std&quot;</span><span class="p">]</span>
+    
+    <span class="c1"># Export as CSV for testing purposes</span>
+    <span class="n">df3</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;comparison.csv&quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Comparison complete&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">df3</span></div>
+
+
+<span class="c1"># format and export for when data for both ICESat-2 ATL08 and GEDI L2A is available</span>
+<div class="viewcode-block" id="export">
+<a class="viewcode-back" href="../../scripts.html#scripts.process_sat_lidar.export">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">export</span><span class="p">(</span><span class="n">icesat_agg</span><span class="p">,</span> <span class="n">gedi_agg</span><span class="p">,</span> <span class="n">compared</span><span class="p">,</span> <span class="n">config_dict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Format and export the aggregated and compared results as .shp, .csv, and/or .parquet</span>
+
+<span class="sd">    @author: Vincent Ribberink</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    icesat_agg : Pandas DataFrame</span>
+<span class="sd">        Aggregated ICESat-2 ATL08 data</span>
+<span class="sd">    gedi_agg : Pandas DataFrame</span>
+<span class="sd">        Aggregated GEDI L2A data</span>
+<span class="sd">    compared : Pandas DataFrame</span>
+<span class="sd">        Comparison DataFrame of ICESat-2 ATL08 and GEDI L2A aggregated data</span>
+<span class="sd">    config_dict : dictionary</span>
+<span class="sd">        dictionary of parameters </span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;---------------------------------&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Starting export&quot;</span><span class="p">)</span>
+
+    <span class="c1"># read configurations</span>
+    <span class="n">polygons_path</span> <span class="o">=</span> <span class="n">config_dict</span><span class="p">[</span><span class="s1">&#39;PolygonsPath&#39;</span><span class="p">]</span>
+    <span class="n">out_dir</span> <span class="o">=</span> <span class="n">config_dict</span><span class="p">[</span><span class="s1">&#39;OutputDir&#39;</span><span class="p">]</span>
+
+    <span class="c1"># read output configurations, convert to boolean</span>
+    <span class="n">out_csv</span> <span class="o">=</span> <span class="p">(</span><span class="n">config_dict</span><span class="p">[</span><span class="s1">&#39;OutputCSV&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;True&#39;</span><span class="p">)</span>
+    <span class="n">out_shp</span> <span class="o">=</span> <span class="p">(</span><span class="n">config_dict</span><span class="p">[</span><span class="s1">&#39;OutputShapefile&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;True&#39;</span><span class="p">)</span>
+    <span class="n">out_parquet</span> <span class="o">=</span> <span class="p">(</span><span class="n">config_dict</span><span class="p">[</span><span class="s1">&#39;OutputParquet&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;True&#39;</span><span class="p">)</span>
+
+    <span class="c1"># export to csv</span>
+    <span class="k">if</span> <span class="n">out_csv</span><span class="p">:</span>
+        <span class="n">icesat_agg</span><span class="o">.</span><span class="n">to_csv</span><span class="p">((</span><span class="n">out_dir</span> <span class="o">+</span> <span class="s1">&#39;/icesat_agg.csv&#39;</span><span class="p">))</span>
+        <span class="n">gedi_agg</span><span class="o">.</span><span class="n">to_csv</span><span class="p">((</span><span class="n">out_dir</span> <span class="o">+</span> <span class="s1">&#39;/gedi_agg.csv&#39;</span><span class="p">))</span>
+        <span class="n">compared</span><span class="o">.</span><span class="n">to_csv</span><span class="p">((</span><span class="n">out_dir</span> <span class="o">+</span> <span class="s1">&#39;/comparison.csv&#39;</span><span class="p">))</span>
+
+    <span class="c1"># export to parquet</span>
+    <span class="k">if</span> <span class="n">out_parquet</span><span class="p">:</span>
+        <span class="n">icesat_agg</span><span class="o">.</span><span class="n">to_parquet</span><span class="p">((</span><span class="n">out_dir</span> <span class="o">+</span> <span class="s1">&#39;/icesat_agg.parquet&#39;</span><span class="p">))</span>
+        <span class="n">gedi_agg</span><span class="o">.</span><span class="n">to_parquet</span><span class="p">((</span><span class="n">out_dir</span> <span class="o">+</span> <span class="s1">&#39;/gedi_agg.parquet&#39;</span><span class="p">))</span>
+        <span class="n">compared</span><span class="o">.</span><span class="n">to_parquet</span><span class="p">((</span><span class="n">out_dir</span> <span class="o">+</span> <span class="s1">&#39;/comparison.parquet&#39;</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">out_shp</span><span class="p">:</span>
+
+        <span class="c1"># read geometry</span>
+        <span class="n">geom_gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">polygons_path</span><span class="p">)</span>
+        <span class="n">geom</span> <span class="o">=</span> <span class="n">geom_gdf</span><span class="o">.</span><span class="n">geometry</span>
+
+        <span class="c1"># convert to geodataframes</span>
+        <span class="n">ice_agg_gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">icesat_agg</span><span class="p">,</span> <span class="n">geometry</span><span class="o">=</span><span class="n">geom</span><span class="p">)</span>
+        <span class="n">gedi_agg_gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">gedi_agg</span><span class="p">,</span> <span class="n">geometry</span><span class="o">=</span><span class="n">geom</span><span class="p">)</span>
+        <span class="n">comp_gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">compared</span><span class="p">,</span> <span class="n">geometry</span><span class="o">=</span><span class="n">geom</span><span class="p">)</span>
+
+        <span class="c1"># TO DO -&gt; rename columns to avoid ambiguity from truncation when exporting as shp</span>
+
+        <span class="c1"># export as shp</span>
+        <span class="n">ice_agg_gdf</span><span class="o">.</span><span class="n">to_file</span><span class="p">((</span><span class="n">out_dir</span> <span class="o">+</span> <span class="s1">&#39;/icesat_agg.shp&#39;</span><span class="p">))</span> <span class="c1"># columns not renamed, will be truncated</span>
+        <span class="n">gedi_agg_gdf</span><span class="o">.</span><span class="n">to_file</span><span class="p">((</span><span class="n">out_dir</span> <span class="o">+</span> <span class="s1">&#39;/gedi_agg.shp&#39;</span><span class="p">))</span>
+        <span class="n">comp_gdf</span><span class="o">.</span><span class="n">to_file</span><span class="p">((</span><span class="n">out_dir</span> <span class="o">+</span> <span class="s1">&#39;/comparison.shp&#39;</span><span class="p">))</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Exporting complete&quot;</span><span class="p">)</span></div>
+
+
+<span class="c1"># format and export for ICESat-2 only</span>
+<div class="viewcode-block" id="export_ATL08">
+<a class="viewcode-back" href="../../scripts.html#scripts.process_sat_lidar.export_ATL08">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">export_ATL08</span><span class="p">(</span><span class="n">icesat_agg</span><span class="p">,</span> <span class="n">config_dict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Format and export the aggregated ICESat-2 ATL08 results as .shp, .csv, and/or .parquet</span>
+
+<span class="sd">    @author: Vincent Ribberink</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    icesat_agg : Pandas DataFrame</span>
+<span class="sd">        Aggregated ICESat-2 ATL08 data</span>
+<span class="sd">    config_dict : dictionary</span>
+<span class="sd">        dictionary of parameters </span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;---------------------------------&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Starting export&quot;</span><span class="p">)</span>
+
+    <span class="c1"># read configurations</span>
+    <span class="n">polygons_path</span> <span class="o">=</span> <span class="n">config_dict</span><span class="p">[</span><span class="s1">&#39;PolygonsPath&#39;</span><span class="p">]</span>
+    <span class="n">out_dir</span> <span class="o">=</span> <span class="n">config_dict</span><span class="p">[</span><span class="s1">&#39;OutputDir&#39;</span><span class="p">]</span>
+
+    <span class="c1"># read output configurations, convert to boolean</span>
+    <span class="n">out_csv</span> <span class="o">=</span> <span class="p">(</span><span class="n">config_dict</span><span class="p">[</span><span class="s1">&#39;OutputCSV&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;True&#39;</span><span class="p">)</span>
+    <span class="n">out_shp</span> <span class="o">=</span> <span class="p">(</span><span class="n">config_dict</span><span class="p">[</span><span class="s1">&#39;OutputShapefile&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;True&#39;</span><span class="p">)</span>
+    <span class="n">out_parquet</span> <span class="o">=</span> <span class="p">(</span><span class="n">config_dict</span><span class="p">[</span><span class="s1">&#39;OutputParquet&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;True&#39;</span><span class="p">)</span>
+
+    <span class="c1"># export to csv</span>
+    <span class="k">if</span> <span class="n">out_csv</span><span class="p">:</span>
+        <span class="n">icesat_agg</span><span class="o">.</span><span class="n">to_csv</span><span class="p">((</span><span class="n">out_dir</span> <span class="o">+</span> <span class="s1">&#39;/icesat_agg.csv&#39;</span><span class="p">))</span>
+
+    <span class="c1"># export to parquet</span>
+    <span class="k">if</span> <span class="n">out_parquet</span><span class="p">:</span>
+        <span class="n">icesat_agg</span><span class="o">.</span><span class="n">to_parquet</span><span class="p">((</span><span class="n">out_dir</span> <span class="o">+</span> <span class="s1">&#39;/icesat_agg.parquet&#39;</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">out_shp</span><span class="p">:</span>
+
+        <span class="c1"># read geometry</span>
+        <span class="n">geom_gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">polygons_path</span><span class="p">)</span>
+        <span class="n">geom</span> <span class="o">=</span> <span class="n">geom_gdf</span><span class="o">.</span><span class="n">geometry</span>
+
+        <span class="c1"># convert to geodataframes</span>
+        <span class="n">ice_agg_gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">icesat_agg</span><span class="p">,</span> <span class="n">geometry</span><span class="o">=</span><span class="n">geom</span><span class="p">)</span>
+
+        <span class="c1"># export as shp</span>
+        <span class="n">ice_agg_gdf</span><span class="o">.</span><span class="n">to_file</span><span class="p">((</span><span class="n">out_dir</span> <span class="o">+</span> <span class="s1">&#39;/icesat_agg.shp&#39;</span><span class="p">))</span> <span class="c1"># columns not renamed, will be truncated</span>
+
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Exporting complete&quot;</span><span class="p">)</span></div>
+
+
+<span class="c1"># format and export for GEDI L2A only</span>
+<div class="viewcode-block" id="export_GEDI02_A">
+<a class="viewcode-back" href="../../scripts.html#scripts.process_sat_lidar.export_GEDI02_A">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">export_GEDI02_A</span><span class="p">(</span><span class="n">gedi_agg</span><span class="p">,</span> <span class="n">config_dict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Format and export the aggregated GEDI L2A results as .shp, .csv, and/or .parquet</span>
+
+<span class="sd">    @author: Vincent Ribberink</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    gedi_agg : Pandas DataFrame</span>
+<span class="sd">        Aggregated GEDI L2A data</span>
+<span class="sd">    config_dict : dictionary</span>
+<span class="sd">        dictionary of parameters </span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;---------------------------------&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Starting export&quot;</span><span class="p">)</span>
+
+    <span class="c1"># read configurations</span>
+    <span class="n">polygons_path</span> <span class="o">=</span> <span class="n">config_dict</span><span class="p">[</span><span class="s1">&#39;PolygonsPath&#39;</span><span class="p">]</span>
+    <span class="n">out_dir</span> <span class="o">=</span> <span class="n">config_dict</span><span class="p">[</span><span class="s1">&#39;OutputDir&#39;</span><span class="p">]</span>
+
+    <span class="c1"># read output configurations, convert to boolean</span>
+    <span class="n">out_csv</span> <span class="o">=</span> <span class="p">(</span><span class="n">config_dict</span><span class="p">[</span><span class="s1">&#39;OutputCSV&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;True&#39;</span><span class="p">)</span>
+    <span class="n">out_shp</span> <span class="o">=</span> <span class="p">(</span><span class="n">config_dict</span><span class="p">[</span><span class="s1">&#39;OutputShapefile&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;True&#39;</span><span class="p">)</span>
+    <span class="n">out_parquet</span> <span class="o">=</span> <span class="p">(</span><span class="n">config_dict</span><span class="p">[</span><span class="s1">&#39;OutputParquet&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;True&#39;</span><span class="p">)</span>
+
+    <span class="c1"># export to csv</span>
+    <span class="k">if</span> <span class="n">out_csv</span><span class="p">:</span>
+        <span class="n">gedi_agg</span><span class="o">.</span><span class="n">to_csv</span><span class="p">((</span><span class="n">out_dir</span> <span class="o">+</span> <span class="s1">&#39;/gedi_agg.csv&#39;</span><span class="p">))</span>
+
+    <span class="c1"># export to parquet</span>
+    <span class="k">if</span> <span class="n">out_parquet</span><span class="p">:</span>
+        <span class="n">gedi_agg</span><span class="o">.</span><span class="n">to_parquet</span><span class="p">((</span><span class="n">out_dir</span> <span class="o">+</span> <span class="s1">&#39;/gedi_agg.parquet&#39;</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">out_shp</span><span class="p">:</span>
+        <span class="c1"># read geometry</span>
+        <span class="n">geom_gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">polygons_path</span><span class="p">)</span>
+        <span class="n">geom</span> <span class="o">=</span> <span class="n">geom_gdf</span><span class="o">.</span><span class="n">geometry</span>
+
+        <span class="c1"># convert to geodataframes</span>
+        <span class="n">gedi_agg_gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">gedi_agg</span><span class="p">,</span> <span class="n">geometry</span><span class="o">=</span><span class="n">geom</span><span class="p">)</span>
+
+        <span class="c1"># export as shp</span>
+        <span class="n">gedi_agg_gdf</span><span class="o">.</span><span class="n">to_file</span><span class="p">((</span><span class="n">out_dir</span> <span class="o">+</span> <span class="s1">&#39;/gedi_agg.shp&#39;</span><span class="p">))</span> <span class="c1"># columns not renamed, will be truncated</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Exporting complete&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../scripts.html#scripts.process_sat_lidar.main">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run the process_sat_lidar script.</span>
+<span class="sd">    This does not download the granules from NASA - use earthaccess_download.py</span>
+
+<span class="sd">    @author: Vincent Ribberink</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1">#################</span>
+    <span class="c1"># TESTING SETUP #</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+    <span class="c1"># change this to the appropriate sample </span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;sample_polygons/Alfred_Bog&quot;</span><span class="p">)</span>
+    <span class="c1"># TESTING SETUP #</span>
+    <span class="c1">#################</span>
+
+
+    <span class="c1">### SETUP ###</span>
+
+    <span class="c1"># read config</span>
+    <span class="n">config_dict</span> <span class="o">=</span> <span class="n">read_config</span><span class="p">(</span><span class="s2">&quot;config_process_sat_lidar.txt&quot;</span><span class="p">)</span>
+
+    <span class="c1"># unpack parameters</span>
+    <span class="n">polygons_path</span> <span class="o">=</span> <span class="n">config_dict</span><span class="p">[</span><span class="s1">&#39;PolygonsPath&#39;</span><span class="p">]</span>
+    <span class="n">download_dir</span> <span class="o">=</span> <span class="n">config_dict</span><span class="p">[</span><span class="s1">&#39;DownloadDir&#39;</span><span class="p">]</span>
+    <span class="n">beam_type</span> <span class="o">=</span> <span class="n">config_dict</span><span class="p">[</span><span class="s1">&#39;BeamType&#39;</span><span class="p">]</span>
+    <span class="n">night_only</span> <span class="o">=</span> <span class="n">config_dict</span><span class="p">[</span><span class="s1">&#39;NightOnly&#39;</span><span class="p">]</span>
+    <span class="n">quality_flag</span> <span class="o">=</span> <span class="n">config_dict</span><span class="p">[</span><span class="s1">&#39;QualityFlag&#39;</span><span class="p">]</span>
+    <span class="n">short_name</span> <span class="o">=</span> <span class="n">config_dict</span><span class="p">[</span><span class="s1">&#39;ShortName&#39;</span><span class="p">]</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;---------------------------------&quot;</span><span class="p">)</span>
+
+    <span class="c1"># get info on downloaded granules</span>
+    <span class="n">ATL08_granules</span><span class="p">,</span> <span class="n">GEDI02_A_granules</span><span class="p">,</span> <span class="n">icesat_only</span><span class="p">,</span> <span class="n">gedi_only</span> <span class="o">=</span> <span class="n">download_check</span><span class="p">(</span><span class="n">download_dir</span><span class="p">,</span> <span class="n">short_name</span><span class="p">)</span>
+
+
+    <span class="c1">### FILTER &amp; CONVERT ###</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">gedi_only</span><span class="p">:</span>
+        <span class="c1"># convert and filter ICESat-2 ATL08 h5 files to pandas dataframes</span>
+        <span class="n">icesat_df</span> <span class="o">=</span> <span class="n">convert_icesat</span><span class="p">(</span><span class="n">ATL08_granules</span><span class="p">,</span> <span class="n">beam_type</span><span class="p">,</span> <span class="n">night_only</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ICESat-2 ATL08 granules complete&quot;</span><span class="p">)</span>
+        <span class="c1"># aggregate by polygon</span>
+        <span class="n">icesat_agg</span> <span class="o">=</span> <span class="n">aggregate</span><span class="p">(</span><span class="n">polygons_path</span><span class="p">,</span> <span class="n">icesat_df</span><span class="p">,</span> <span class="s2">&quot;Icesat&quot;</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span> <span class="c1"># 8 meter radius circles</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">icesat_only</span><span class="p">:</span>
+        <span class="c1"># convert and GEDI L2A GEDI L2A h5 files to pandas dataframes</span>
+        <span class="n">gedi_df</span> <span class="o">=</span> <span class="n">convert_gedi</span><span class="p">(</span><span class="n">GEDI02_A_granules</span><span class="p">,</span> <span class="n">quality_flag</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;GEDI L2A granules complete&quot;</span><span class="p">)</span>
+        <span class="c1"># aggregate by polygon</span>
+        <span class="n">gedi_agg</span> <span class="o">=</span> <span class="n">aggregate</span><span class="p">(</span><span class="n">polygons_path</span><span class="p">,</span> <span class="n">gedi_df</span><span class="p">,</span> <span class="s2">&quot;Gedi&quot;</span><span class="p">,</span> <span class="mf">12.5</span><span class="p">)</span> <span class="c1"># 12.5 meter radius circles</span>
+ 
+
+    <span class="c1">### COMPARE ###</span>
+
+    <span class="c1"># if both ATL08 and GEDI02_A are present, run the comparison</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">icesat_only</span> <span class="o">|</span> <span class="n">gedi_only</span><span class="p">):</span>
+        <span class="n">compared</span> <span class="o">=</span> <span class="n">compare_data</span><span class="p">(</span><span class="n">icesat_agg</span><span class="p">,</span> <span class="n">gedi_agg</span><span class="p">)</span>
+
+
+    <span class="c1">### FORMAT &amp; EXPORT ###</span>
+
+    <span class="k">if</span> <span class="n">icesat_only</span><span class="p">:</span>
+        <span class="n">export_ATL08</span><span class="p">(</span><span class="n">icesat_agg</span><span class="p">,</span> <span class="n">config_dict</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">gedi_only</span><span class="p">:</span>
+        <span class="n">export_GEDI02_A</span><span class="p">(</span><span class="n">gedi_agg</span><span class="p">,</span> <span class="n">config_dict</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">export</span><span class="p">(</span><span class="n">icesat_agg</span><span class="p">,</span> <span class="n">gedi_agg</span><span class="p">,</span> <span class="n">compared</span><span class="p">,</span> <span class="n">config_dict</span><span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;---------------------------------&quot;</span><span class="p">)</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+    
+
+        
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">PeatLidar</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">scripts</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Vincent Ribberink, Joshua Salvador, Ethan Gauthier.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

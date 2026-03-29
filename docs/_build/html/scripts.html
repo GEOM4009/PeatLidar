@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>scripts package &#8212; PeatLidar 1.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=8d563738"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="scripts" href="modules.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="scripts-package">
+<h1>scripts package<a class="headerlink" href="#scripts-package" title="Link to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
+</section>
+<section id="module-scripts.earthaccess_download">
+<span id="scripts-earthaccess-download-module"></span><h2>scripts.earthaccess_download module<a class="headerlink" href="#module-scripts.earthaccess_download" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="scripts.earthaccess_download.authenticate">
+<span class="sig-prename descclassname"><span class="pre">scripts.earthaccess_download.</span></span><span class="sig-name descname"><span class="pre">authenticate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">status_check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/earthaccess_download.html#authenticate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.earthaccess_download.authenticate" title="Link to this definition">¶</a></dt>
+<dd><p>Authenticate Earthdata credentials and initialize a session</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>None</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scripts.earthaccess_download.download">
+<span class="sig-prename descclassname"><span class="pre">scripts.earthaccess_download.</span></span><span class="sig-name descname"><span class="pre">download</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">granules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/earthaccess_download.html#download"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.earthaccess_download.download" title="Link to this definition">¶</a></dt>
+<dd><p>Download granules from NASA Earthdata</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>granules</strong><span class="classifier">list</span></dt><dd><p>List of granule IDs</p>
+</dd>
+<dt><strong>download_dir</strong><span class="classifier">string</span></dt><dd><p>Path of the download directory</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>filelist</strong><span class="classifier">list</span></dt><dd><p>List of filepaths of downloaded granules</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scripts.earthaccess_download.main">
+<span class="sig-prename descclassname"><span class="pre">scripts.earthaccess_download.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/earthaccess_download.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.earthaccess_download.main" title="Link to this definition">¶</a></dt>
+<dd><p>Run the earthaccess_download script</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>None</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scripts.earthaccess_download.search">
+<span class="sig-prename descclassname"><span class="pre">scripts.earthaccess_download.</span></span><span class="sig-name descname"><span class="pre">search</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">short_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">polygon</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/earthaccess_download.html#search"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.earthaccess_download.search" title="Link to this definition">¶</a></dt>
+<dd><p>Query NASA EarthData products</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>short_name</strong><span class="classifier">string</span></dt><dd><p>Short name of the Earthdata product (e.g. GEDI02_A)</p>
+</dd>
+<dt><strong>date_range</strong><span class="classifier">tuple</span></dt><dd><p>Start and end date as strings in YYYY-MM-DD format</p>
+</dd>
+<dt><strong>polygon</strong><span class="classifier">string</span></dt><dd><p>Short name of the Earthdata product (e.g. GEDI02_A)</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>granules</strong><span class="classifier">list</span></dt><dd><p>List of granule IDs returned by the query</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-scripts.process_sat_lidar">
+<span id="scripts-process-sat-lidar-module"></span><h2>scripts.process_sat_lidar module<a class="headerlink" href="#module-scripts.process_sat_lidar" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="scripts.process_sat_lidar.aggregate">
+<span class="sig-prename descclassname"><span class="pre">scripts.process_sat_lidar.</span></span><span class="sig-name descname"><span class="pre">aggregate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">polygons_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">satellite_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/process_sat_lidar.html#aggregate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.process_sat_lidar.aggregate" title="Link to this definition">¶</a></dt>
+<dd><p>Converts GEDI files from h5 to dataframes</p>
+<p>&#64;author: Ethan Gauthier (lead), Vincent Ribberink</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>polygon_path</strong><span class="classifier">string</span></dt><dd><p>Path pointing to input geometry</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>None</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scripts.process_sat_lidar.compare_data">
+<span class="sig-prename descclassname"><span class="pre">scripts.process_sat_lidar.</span></span><span class="sig-name descname"><span class="pre">compare_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">icesat_agg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gedi_agg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/process_sat_lidar.html#compare_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.process_sat_lidar.compare_data" title="Link to this definition">¶</a></dt>
+<dd><p>Compares ICESat canopy data with GEDI canopy data</p>
+<p>&#64;author: Joshua Salvador</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df</strong><span class="classifier">dataframe</span></dt><dd><p>dataframe containing both ICESat and GEDI data</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>None</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scripts.process_sat_lidar.convert_gedi">
+<span class="sig-prename descclassname"><span class="pre">scripts.process_sat_lidar.</span></span><span class="sig-name descname"><span class="pre">convert_gedi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">granules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quality_flag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/process_sat_lidar.html#convert_gedi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.process_sat_lidar.convert_gedi" title="Link to this definition">¶</a></dt>
+<dd><p>Converts GEDI files from h5 to dataframes</p>
+<p>&#64;author: Joshua Salvador (lead), Vincent Ribberink</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>files</strong><span class="classifier">list</span></dt><dd><p>List containing paths of GEDI L2A .h5 granules</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>None</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scripts.process_sat_lidar.convert_icesat">
+<span class="sig-prename descclassname"><span class="pre">scripts.process_sat_lidar.</span></span><span class="sig-name descname"><span class="pre">convert_icesat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">granules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beam_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">night_only</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/process_sat_lidar.html#convert_icesat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.process_sat_lidar.convert_icesat" title="Link to this definition">¶</a></dt>
+<dd><p>Converts ICESat data from h5 files to dataframes
+Based on Xarray documentation examples</p>
+<p>&#64;authors: Vincent Ribberink, Joshua Salvador</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>test_files</strong><span class="classifier">list</span></dt><dd><p>List containing paths of ICESat-2 ATL08 .h5 granules</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>None</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scripts.process_sat_lidar.download_check">
+<span class="sig-prename descclassname"><span class="pre">scripts.process_sat_lidar.</span></span><span class="sig-name descname"><span class="pre">download_check</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">download_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">short_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/process_sat_lidar.html#download_check"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.process_sat_lidar.download_check" title="Link to this definition">¶</a></dt>
+<dd><p>Prints important information about the granules in the download directory</p>
+<p>&#64;author: Vincent Ribberink</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>download_dir</strong><span class="classifier">String</span></dt><dd><p>string path to the directory containing downloaded ATL08 and GEDI02_A .h5 granules</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>icesat_only (bool):</dt><dd><p>True if only ATL08 granules are found</p>
+</dd>
+<dt>gedi_only (bool):</dt><dd><p>True if only GEDI02_A granules are found</p>
+</dd>
+<dt>ATL08_granules (list):</dt><dd><p>List of ICESat-2 ATL08 granules in download directory</p>
+</dd>
+<dt>GEDI02_A_granules (list):</dt><dd><p>List of GEDI L2A granules in download directory</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scripts.process_sat_lidar.export">
+<span class="sig-prename descclassname"><span class="pre">scripts.process_sat_lidar.</span></span><span class="sig-name descname"><span class="pre">export</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">icesat_agg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gedi_agg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compared</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/process_sat_lidar.html#export"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.process_sat_lidar.export" title="Link to this definition">¶</a></dt>
+<dd><p>Format and export the aggregated and compared results as .shp, .csv, and/or .parquet</p>
+<p>&#64;author: Vincent Ribberink</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>icesat_agg</strong><span class="classifier">Pandas DataFrame</span></dt><dd><p>Aggregated ICESat-2 ATL08 data</p>
+</dd>
+<dt><strong>gedi_agg</strong><span class="classifier">Pandas DataFrame</span></dt><dd><p>Aggregated GEDI L2A data</p>
+</dd>
+<dt><strong>compared</strong><span class="classifier">Pandas DataFrame</span></dt><dd><p>Comparison DataFrame of ICESat-2 ATL08 and GEDI L2A aggregated data</p>
+</dd>
+<dt><strong>config_dict</strong><span class="classifier">dictionary</span></dt><dd><p>dictionary of parameters</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>None</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scripts.process_sat_lidar.export_ATL08">
+<span class="sig-prename descclassname"><span class="pre">scripts.process_sat_lidar.</span></span><span class="sig-name descname"><span class="pre">export_ATL08</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">icesat_agg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/process_sat_lidar.html#export_ATL08"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.process_sat_lidar.export_ATL08" title="Link to this definition">¶</a></dt>
+<dd><p>Format and export the aggregated ICESat-2 ATL08 results as .shp, .csv, and/or .parquet</p>
+<p>&#64;author: Vincent Ribberink</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>icesat_agg</strong><span class="classifier">Pandas DataFrame</span></dt><dd><p>Aggregated ICESat-2 ATL08 data</p>
+</dd>
+<dt><strong>config_dict</strong><span class="classifier">dictionary</span></dt><dd><p>dictionary of parameters</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>None</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scripts.process_sat_lidar.export_GEDI02_A">
+<span class="sig-prename descclassname"><span class="pre">scripts.process_sat_lidar.</span></span><span class="sig-name descname"><span class="pre">export_GEDI02_A</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gedi_agg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/process_sat_lidar.html#export_GEDI02_A"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.process_sat_lidar.export_GEDI02_A" title="Link to this definition">¶</a></dt>
+<dd><p>Format and export the aggregated GEDI L2A results as .shp, .csv, and/or .parquet</p>
+<p>&#64;author: Vincent Ribberink</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>gedi_agg</strong><span class="classifier">Pandas DataFrame</span></dt><dd><p>Aggregated GEDI L2A data</p>
+</dd>
+<dt><strong>config_dict</strong><span class="classifier">dictionary</span></dt><dd><p>dictionary of parameters</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>None</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scripts.process_sat_lidar.main">
+<span class="sig-prename descclassname"><span class="pre">scripts.process_sat_lidar.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/process_sat_lidar.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.process_sat_lidar.main" title="Link to this definition">¶</a></dt>
+<dd><p>Run the process_sat_lidar script.
+This does not download the granules from NASA - use earthaccess_download.py</p>
+<p>&#64;author: Vincent Ribberink</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>None.</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scripts.process_sat_lidar.read_config">
+<span class="sig-prename descclassname"><span class="pre">scripts.process_sat_lidar.</span></span><span class="sig-name descname"><span class="pre">read_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/process_sat_lidar.html#read_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.process_sat_lidar.read_config" title="Link to this definition">¶</a></dt>
+<dd><p>Read and validate parameters from a config file.
+Config file must be written in .ini format, though the file can be .txt
+Based on ConfigParser user guide</p>
+<p>&#64;author: Vincent Ribberink</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config_path</strong><span class="classifier">string</span></dt><dd><p>Path pointing to the config file</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>config_dict (dictionary):</dt><dd><p>Dictionary containing the validated parameters</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-scripts.user_input3">
+<span id="scripts-user-input3-module"></span><h2>scripts.user_input3 module<a class="headerlink" href="#module-scripts.user_input3" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="scripts.user_input3.write_user_config">
+<span class="sig-prename descclassname"><span class="pre">scripts.user_input3.</span></span><span class="sig-name descname"><span class="pre">write_user_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/user_input3.html#write_user_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.user_input3.write_user_config" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-scripts">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-scripts" title="Link to this heading">¶</a></h2>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PeatLidar</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">scripts</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">scripts package</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">scripts</a><ul>
+      <li>Previous: <a href="modules.html" title="previous chapter">scripts</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Vincent Ribberink, Joshua Salvador, Ethan Gauthier.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/scripts.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
