@@ -7,11 +7,11 @@ PolygonsPath = Alfred_Bog.kmz
 DownloadDir = download_dir
 
 ;Short name of the Earthdata product to download (ATL08, GEDI02_A, both)
-ShortName = GEDI02_A
+ShortName = ATL08
 
 ;Date range for the earthdata query
-StartDate = 2020-01-01
-EndDate = 2021-03-01
+StartDate = 2019-01-01
+EndDate = 2020-01-01
 
 
 [ATL08]

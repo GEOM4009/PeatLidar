@@ -1,29 +1,29 @@
 [INPUT]
 ;Path to the input polygon(s) geometry file (common geospatial formats)
-PolygonsPath = f
+PolygonsPath = 
 
 ;Path to the directory where data granules will be downloaded
-DownloadDir = f
+DownloadDir = 
 
 ;Short name of the Earthdata product to download (ATL08, GEDI02_A, both)
-ShortName = f
+ShortName = 
 
 ;Date range for the earthdata query
-StartDate = f
-EndDate = f
+StartDate = 
+EndDate = 
 
 
 [ATL08]
 
 ;Beam type filter (strong, weak, all)
-BeamType = f
+BeamType = 
 
 ;Night flag filter
-NightOnly = f
+NightOnly = 
 
 
 [GEDI02_A]
-QualityFlag = f
+QualityFlag = 
 
 
 [OUTPUT]
@@ -32,6 +32,6 @@ QualityFlag = f
 OutputDir = 
 
 ;Output file format options
-OutputCSV = f
-OutputParquet = f
-OutputShapefile = f
+OutputCSV = 
+OutputParquet = 
+OutputShapefile = 

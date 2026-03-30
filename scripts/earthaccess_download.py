@@ -17,6 +17,8 @@ def authenticate(status_check=False):
     """
     Authenticate Earthdata credentials and initialize a session
 
+    @author: Vincent Ribberink
+
     Optional
     ----------
     status_check : Boolean
@@ -32,7 +34,7 @@ def authenticate(status_check=False):
 
     print("Authenticating...")
 
-    earthaccess.login(persist=False)
+    earthaccess.login(persist=True)
 
     # check status before starting -> slow and probably not necessary
     if status_check == True:
@@ -50,6 +52,8 @@ def authenticate(status_check=False):
 def search(short_name, date_range, polygon):
     """
     Query NASA EarthData products
+
+    @author: Vincent Ribberink
 
     Parameters
     ----------
@@ -111,6 +115,8 @@ def download(granules, download_dir):
 def main():
     """
     Run the earthaccess_download script
+
+    @author: Vincent Ribberink
 
     Returns
     -------

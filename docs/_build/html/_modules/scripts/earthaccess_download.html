@@ -32,16 +32,16 @@
             
   <h1>Source code for scripts.earthaccess_download</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Download H5 granules from NASA </span>
-<span class="c1"># developed as part of a final project for GEOM 4009</span>
+<span class="c1"># developed as part of the PeatLidar final project for GEOM 4009</span>
 
 <span class="c1"># Author: Vincent Ribberink</span>
 
-<span class="c1"># earthaccess.login() -&gt; keeps a .netrc file of credentials</span>
-    <span class="c1"># remove &quot;persist=True&quot; if you want to avoid saving credentials locally</span>
+<span class="c1"># earthaccess.login() -&gt; uses an interactive login</span>
+    <span class="c1"># change &quot;persist=False&quot; to True if you want to save credentials locally (.netrc file)</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">earthaccess</span> 
 <span class="kn">import</span><span class="w"> </span><span class="nn">geopandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpd</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">shapely</span>
+<span class="c1">#import shapely # used for downloading polygon by polygon in (not used by default)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scripts.process_sat_lidar</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_config</span>
 
@@ -51,6 +51,8 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">authenticate</span><span class="p">(</span><span class="n">status_check</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Authenticate Earthdata credentials and initialize a session</span>
+
+<span class="sd">    @author: Vincent Ribberink</span>
 
 <span class="sd">    Optional</span>
 <span class="sd">    ----------</span>
@@ -67,7 +69,7 @@
 
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Authenticating...&quot;</span><span class="p">)</span>
 
-    <span class="n">earthaccess</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">persist</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">earthaccess</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">persist</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
     <span class="c1"># check status before starting -&gt; slow and probably not necessary</span>
     <span class="k">if</span> <span class="n">status_check</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
@@ -88,6 +90,8 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">search</span><span class="p">(</span><span class="n">short_name</span><span class="p">,</span> <span class="n">date_range</span><span class="p">,</span> <span class="n">polygon</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Query NASA EarthData products</span>
+
+<span class="sd">    @author: Vincent Ribberink</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -155,6 +159,8 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Run the earthaccess_download script</span>
+
+<span class="sd">    @author: Vincent Ribberink</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>

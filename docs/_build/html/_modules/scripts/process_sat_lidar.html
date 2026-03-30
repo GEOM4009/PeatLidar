@@ -31,7 +31,9 @@
           <div class="body" role="main">
             
   <h1>Source code for scripts.process_sat_lidar</h1><div class="highlight"><pre>
-<span></span><span class="c1"># all code combined</span>
+<span></span><span class="c1">##### process_sat_lidar.py #####</span>
+<span class="c1"># reads and aggregates ICESat-2 ATL08 and GEDI L2A satellite lidar data</span>
+<span class="c1"># this does not download any data, please use earthaccess_download.py</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">geopandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpd</span>
@@ -40,7 +42,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
 
-<span class="c1">### read config</span>
+<span class="c1">### read and validate configuration</span>
 <div class="viewcode-block" id="read_config">
 <a class="viewcode-back" href="../../scripts.html#scripts.process_sat_lidar.read_config">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">read_config</span><span class="p">(</span><span class="n">config_path</span><span class="p">):</span>
@@ -48,7 +50,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Read and validate parameters from a config file.</span>
 <span class="sd">    Config file must be written in .ini format, though the file can be .txt</span>
-<span class="sd">    Based on ConfigParser user guide</span>
+<span class="sd">    Based on ConfigParser user guide: https://docs.python.org/3/library/configparser.html#quick-start</span>
 
 <span class="sd">    @author: Vincent Ribberink</span>
 
@@ -60,7 +62,7 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    config_dict (dictionary): </span>
-<span class="sd">        Dictionary containing the validated parameters</span>
+<span class="sd">        Dictionary containing the validated parameters as strings</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># initialize config parser</span>
@@ -259,13 +261,15 @@
     <span class="k">return</span> <span class="n">ATL08_granules</span><span class="p">,</span> <span class="n">GEDI02_A_granules</span><span class="p">,</span> <span class="n">icesat_only</span><span class="p">,</span> <span class="n">gedi_only</span></div>
 
 
-<span class="c1"># filter and extract ICESat-2 vegetation height</span>
+<span class="c1"># filter and extract ICESat-2 canopy height data</span>
 <div class="viewcode-block" id="convert_icesat">
 <a class="viewcode-back" href="../../scripts.html#scripts.process_sat_lidar.convert_icesat">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">convert_icesat</span><span class="p">(</span><span class="n">granules</span><span class="p">,</span> <span class="n">beam_type</span><span class="p">,</span> <span class="n">night_only</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Converts ICESat data from h5 files to dataframes</span>
-<span class="sd">    Based on Xarray documentation examples</span>
+<span class="sd">    Converts ICESat data from h5 files to Pandas DataFrames</span>
+<span class="sd">    Extracts lat/long, canopy height and uncertainty</span>
+<span class="sd">    Filters observations based on strong/weak beams and night flag (see config file)</span>
+<span class="sd">    Based on Xarray documentation examples, altered for use with Pandas Dataframes</span>
 
 <span class="sd">    @authors: Vincent Ribberink, Joshua Salvador</span>
 
@@ -276,7 +280,8 @@
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    None</span>
+<span class="sd">    final : Pandas DataFrame</span>
+<span class="sd">        Contains extracted and filtered observations</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;---------------------------------&quot;</span><span class="p">)</span>
@@ -377,7 +382,7 @@
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">final</span><span class="p">)</span><span class="si">}</span><span class="s2"> filtered observations returned&quot;</span><span class="p">)</span>
 
     <span class="c1"># export to csv for testing purposes</span>
-    <span class="n">final</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;icesat.csv&quot;</span><span class="p">)</span>
+    <span class="c1">#final.to_csv(&quot;icesat.csv&quot;)</span>
 
     <span class="k">return</span> <span class="n">final</span></div>
 
@@ -387,7 +392,7 @@
 <a class="viewcode-back" href="../../scripts.html#scripts.process_sat_lidar.convert_gedi">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">convert_gedi</span><span class="p">(</span><span class="n">granules</span><span class="p">,</span> <span class="n">quality_flag</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Converts GEDI files from h5 to dataframes</span>
+<span class="sd">    Converts GEDI L2A files from h5 to Pandas DataFrames</span>
 
 <span class="sd">    @author: Joshua Salvador (lead), Vincent Ribberink</span>
 
@@ -398,7 +403,8 @@
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    None</span>
+<span class="sd">    final_df : Pandas DataFrame</span>
+<span class="sd">        Contains extracted and filtered observations</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;---------------------------------&quot;</span><span class="p">)</span>
@@ -439,7 +445,12 @@
                             <span class="s1">&#39;quality&#39;</span><span class="p">:</span> <span class="n">qual</span>
                         <span class="p">})</span>
         
-                        <span class="n">df2</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">quality</span><span class="o">==</span><span class="mi">1</span><span class="p">]</span>
+                        <span class="c1"># quality filter if set in config file</span>
+                        <span class="k">if</span> <span class="n">quality_flag</span><span class="p">:</span>
+                            <span class="n">df2</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">quality</span><span class="o">==</span><span class="mi">1</span><span class="p">]</span>
+                        
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">df2</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
                         
                         <span class="n">all_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df2</span><span class="p">)</span>
         
@@ -471,10 +482,17 @@
 <span class="sd">    ----------</span>
 <span class="sd">    polygon_path : string</span>
 <span class="sd">        Path pointing to input geometry</span>
+<span class="sd">    df : Pandas DataFrame</span>
+<span class="sd">        Extracted and filtered observations</span>
+<span class="sd">    satellite_name : string</span>
+<span class="sd">        Either &quot;Icesat&quot; or &quot;GEDI&quot;</span>
+<span class="sd">    radius : int</span>
+<span class="sd">        radius (m) for the dwithin spatial join</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    None</span>
+<span class="sd">    agg: Pandas DataFrame</span>
+<span class="sd">        Aggregated Results</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">crs</span> <span class="o">=</span> <span class="s2">&quot;EPSG:3347&quot;</span> <span class="c1"># stat can lambert</span>
     <span class="n">aoi</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">polygons_path</span><span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span>
@@ -499,8 +517,8 @@
         <span class="n">gdf</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">aoi_gdf</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="c1">#Spatial join by polygon_id, within a radius</span>
-        <span class="c1">#joined = gpd.sjoin(gdf, aoi_gdf[[&quot;polygon_id&quot;, &quot;geometry&quot;]], how=&quot;inner&quot;) # remove dwithin join for very large datasets to save time</span>
-        <span class="n">joined</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">sjoin</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> <span class="n">aoi_gdf</span><span class="p">[[</span><span class="s2">&quot;polygon_id&quot;</span><span class="p">,</span> <span class="s2">&quot;geometry&quot;</span><span class="p">]],</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span> <span class="n">predicate</span><span class="o">=</span><span class="s2">&quot;dwithin&quot;</span><span class="p">,</span> <span class="n">distance</span><span class="o">=</span><span class="n">radius</span><span class="p">)</span>
+        <span class="n">joined</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">sjoin</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> <span class="n">aoi_gdf</span><span class="p">[[</span><span class="s2">&quot;polygon_id&quot;</span><span class="p">,</span> <span class="s2">&quot;geometry&quot;</span><span class="p">]],</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;inner&quot;</span><span class="p">,</span> <span class="n">predicate</span><span class="o">=</span><span class="s2">&quot;dwithin&quot;</span><span class="p">,</span> <span class="n">distance</span><span class="o">=</span><span class="n">radius</span><span class="p">)</span> 
+            <span class="c1"># remove dwithin for very large inputs to save processing time </span>
 
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">joined</span><span class="p">)</span><span class="si">}</span><span class="s2"> intersecting observations were found&quot;</span><span class="p">)</span>
 
@@ -509,7 +527,7 @@
     
     <span class="n">joined</span> <span class="o">=</span> <span class="n">assign_polygon_ids</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">aoi</span><span class="p">,</span> <span class="n">radius</span><span class="p">)</span>
 
-    <span class="c1"># for testing</span>
+    <span class="c1"># export for testing</span>
     <span class="c1">#joined.to_csv(&quot;agg_test.csv&quot;)</span>
 
     <span class="c1">#</span>
@@ -556,12 +574,15 @@
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    df : dataframe</span>
-<span class="sd">        dataframe containing both ICESat and GEDI data</span>
+<span class="sd">    icesat_agg : dataframe</span>
+<span class="sd">        dataframe containing ICESat-2 ATL08 data</span>
+<span class="sd">    gedi_agg : dataframe</span>
+<span class="sd">        dataframe containing ICESat-2 ATL08 data</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    None</span>
+<span class="sd">    df3: dataframe</span>
+<span class="sd">        all compared results</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;---------------------------------&quot;</span><span class="p">)</span>
@@ -581,6 +602,11 @@
     <span class="n">df3</span><span class="p">[</span><span class="s2">&quot;max_diff&quot;</span><span class="p">]</span><span class="o">=</span> <span class="n">df3</span><span class="p">[</span><span class="s2">&quot;icesat_canopy_max&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">df3</span><span class="p">[</span><span class="s2">&quot;gedi_canopy_max&quot;</span><span class="p">]</span>
     <span class="n">df3</span><span class="p">[</span><span class="s2">&quot;min_diff&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df3</span><span class="p">[</span><span class="s2">&quot;icesat_canopy_min&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">df3</span><span class="p">[</span><span class="s2">&quot;gedi_canopy_min&quot;</span><span class="p">]</span>
     <span class="n">df3</span><span class="p">[</span><span class="s2">&quot;std_diff&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df3</span><span class="p">[</span><span class="s2">&quot;icesat_canopy_std&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">df3</span><span class="p">[</span><span class="s2">&quot;gedi_canopy_std&quot;</span><span class="p">]</span>
+
+    <span class="c1"># Calculate percent difference with mean</span>
+    <span class="n">diff</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">df3</span><span class="p">[</span><span class="s2">&quot;icesat_canopy_mean&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">df3</span><span class="p">[</span><span class="s2">&quot;gedi_canopy_mean&quot;</span><span class="p">])</span>
+    <span class="n">avg</span> <span class="o">=</span> <span class="p">(</span><span class="n">df3</span><span class="p">[</span><span class="s2">&quot;icesat_canopy_mean&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">df3</span><span class="p">[</span><span class="s2">&quot;gedi_canopy_mean&quot;</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">df3</span><span class="p">[</span><span class="s2">&quot;percent_diff&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">diff</span> <span class="o">/</span> <span class="n">avg</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span> 
     
     <span class="c1"># Export as CSV for testing purposes</span>
     <span class="n">df3</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s2">&quot;comparison.csv&quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -661,6 +687,7 @@
 
 
 <span class="c1"># format and export for ICESat-2 only</span>
+<span class="c1"># there is probably a better way to combine all 3 export functions, but this works</span>
 <div class="viewcode-block" id="export_ATL08">
 <a class="viewcode-back" href="../../scripts.html#scripts.process_sat_lidar.export_ATL08">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">export_ATL08</span><span class="p">(</span><span class="n">icesat_agg</span><span class="p">,</span> <span class="n">config_dict</span><span class="p">):</span>
@@ -780,6 +807,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Run the process_sat_lidar script.</span>
 <span class="sd">    This does not download the granules from NASA - use earthaccess_download.py</span>
+<span class="sd">    Input geometries, output directory, and chosen filters are written in the config  file (default: config_process_sat_lidar.txt) </span>
 
 <span class="sd">    @author: Vincent Ribberink</span>
 
@@ -792,7 +820,7 @@
     <span class="c1"># TESTING SETUP #</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
     <span class="c1"># change this to the appropriate sample </span>
-    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;sample_polygons/Alfred_Bog&quot;</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s2">&quot;../sample_polygons/Alfred_Bog&quot;</span><span class="p">)</span>
     <span class="c1"># TESTING SETUP #</span>
     <span class="c1">#################</span>
 

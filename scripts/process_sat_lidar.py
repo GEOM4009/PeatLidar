@@ -559,7 +559,7 @@ def compare_data(icesat_agg, gedi_agg):
     df3["percent_diff"] = (diff / avg) * 100 
     
     # Export as CSV for testing purposes
-    df3.to_csv("comparison.csv", index=False)
+    #df3.to_csv("comparison.csv", index=False)
 
     print("Comparison complete")
 
@@ -756,9 +756,9 @@ def main():
 
     #################
     # TESTING SETUP #
-    #import os
+    import os
     # change this to the appropriate sample 
-    #os.chdir("sample_polygons/Alfred_Bog")
+    os.chdir("sample_polygons/Alfred_Bog")
     # TESTING SETUP #
     #################
 

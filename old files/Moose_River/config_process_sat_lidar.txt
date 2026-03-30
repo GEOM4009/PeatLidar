@@ -1,7 +1,7 @@
 [INPUT]
 
 ;Path to the input polygon(s) geometry file (common geospatial formats)
-PolygonsPath = Westport.kmz
+PolygonsPath = Moose_River.kmz
 
 ;Path to the directory where data granules will be downloaded
 DownloadDir = download_dir
@@ -10,8 +10,8 @@ DownloadDir = download_dir
 ShortName = both
 
 ;Date range for the earthdata query
-StartDate = 2021-01-01
-EndDate = 2022-01-01
+StartDate = 2022-01-01
+EndDate = 2022-06-01
 
 
 [ATL08]
@@ -34,5 +34,5 @@ OutputDir = output
 
 ;Output file format options
 OutputCSV = True
-OutputParquet = True
-OutputShapefile = False
+OutputParquet = False
+OutputShapefile = True
