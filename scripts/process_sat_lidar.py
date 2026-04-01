@@ -758,7 +758,7 @@ def main():
     # TESTING SETUP #
     import os
     # change this to the appropriate sample 
-    os.chdir("sample_polygons/Alfred_Bog")
+    os.chdir("sample_polygons/Lake_Claire")
     # TESTING SETUP #
     #################
 

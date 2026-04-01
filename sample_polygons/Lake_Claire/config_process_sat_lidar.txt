@@ -11,7 +11,7 @@ ShortName = ATL08
 
 ;Date range for the earthdata query
 StartDate = 2023-01-01
-EndDate = 2023-08-01
+EndDate = 2024-01-01
 
 
 [ATL08]

@@ -7,7 +7,7 @@ PolygonsPath = Alfred_Bog.kmz
 DownloadDir = download_dir
 
 ;Short name of the Earthdata product to download (ATL08, GEDI02_A, both)
-ShortName = ATL08
+ShortName = both
 
 ;Date range for the earthdata query
 StartDate = 2019-01-01
@@ -24,7 +24,7 @@ NightOnly = True
 
 
 [GEDI02_A]
-QualityFlag = False
+QualityFlag = True
 
 
 [OUTPUT]
@@ -35,4 +35,4 @@ OutputDir = output
 ;Output file format options
 OutputCSV = True
 OutputParquet = True
-OutputShapefile = False
+OutputShapefile = True
