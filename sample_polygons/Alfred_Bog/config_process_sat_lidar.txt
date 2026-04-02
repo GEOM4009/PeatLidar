@@ -11,7 +11,7 @@ ShortName = both
 
 ;Date range for the earthdata query
 StartDate = 2019-01-01
-EndDate = 2020-01-01
+EndDate = 2021-01-01
 
 
 [ATL08]

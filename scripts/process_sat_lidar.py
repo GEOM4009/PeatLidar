@@ -454,6 +454,7 @@ def aggregate(polygons_path, df, satellite_name, radius):
     print(f"Starting aggregation for {len(aoi)} polygons")
 
     #Adding the polygon_id
+    aoi = aoi.sort_values('id')
     aoi["polygon_id"] = range(0, len(aoi)) # changed this to start index at 0
 
     #Assigning polygon ids to Lidar csvs
@@ -481,7 +482,7 @@ def aggregate(polygons_path, df, satellite_name, radius):
     joined = assign_polygon_ids(df, aoi, radius)
 
     # export for testing
-    #joined.to_csv("agg_test.csv")
+    joined.to_csv(f"{satellite_name}_agg_test.csv")
 
     #
     def aggregate_by_polygon(df, stats, satellite_name):
@@ -559,7 +560,7 @@ def compare_data(icesat_agg, gedi_agg):
     df3["percent_diff"] = (diff / avg) * 100 
     
     # Export as CSV for testing purposes
-    #df3.to_csv("comparison.csv", index=False)
+    df3.to_csv("compare3.csv", index=False)
 
     print("Comparison complete")
 
@@ -615,13 +616,20 @@ def export(icesat_agg, gedi_agg, compared, config_dict):
     if out_shp:
 
         # read geometry
-        geom_gdf = gpd.read_file(polygons_path)
-        geom = geom_gdf.geometry
+        aoi = gpd.read_file(polygons_path)
+        #Adding the polygon_id -> same thing is done in agg() for the spatial join
+            # there is probably a better way that avoids doing this twice, but this works
+        aoi = aoi.sort_values('id')
+        aoi["polygon_id"] = range(0, len(aoi)) # changed this to start index at 0
 
         # convert to geodataframes
-        ice_agg_gdf = gpd.GeoDataFrame(icesat_agg, geometry=geom)
-        gedi_agg_gdf = gpd.GeoDataFrame(gedi_agg, geometry=geom)
-        comp_gdf = gpd.GeoDataFrame(compared, geometry=geom)
+        icesat_agg = pd.merge(icesat_agg, aoi, how="inner", on="polygon_id")
+        gedi_agg = pd.merge(gedi_agg, aoi, how="inner", on="polygon_id")
+        compared = pd.merge(compared, aoi, how="inner", on="polygon_id")
+
+        ice_agg_gdf = gpd.GeoDataFrame(icesat_agg, geometry=icesat_agg.geometry)
+        gedi_agg_gdf = gpd.GeoDataFrame(gedi_agg, geometry=gedi_agg.geometry)
+        comp_gdf = gpd.GeoDataFrame(compared, geometry=compared.geometry)
 
         # TO DO -> rename columns to avoid ambiguity from truncation when exporting as shp
 
@@ -675,11 +683,16 @@ def export_ATL08(icesat_agg, config_dict):
     if out_shp:
 
         # read geometry
-        geom_gdf = gpd.read_file(polygons_path)
-        geom = geom_gdf.geometry
+        aoi = gpd.read_file(polygons_path)
+        #Adding the polygon_id -> same thing is done in agg() for the spatial join
+            # there is probably a better way that avoids doing this twice, but this works
+        aoi = aoi.sort_values('id')
+        aoi["polygon_id"] = range(0, len(aoi)) # changed this to start index at 0
+        geom = aoi.geometry
 
         # convert to geodataframes
-        ice_agg_gdf = gpd.GeoDataFrame(icesat_agg, geometry=geom)
+        icesat_agg = pd.merge(icesat_agg, aoi, how="inner", on="polygon_id")
+        ice_agg_gdf = gpd.GeoDataFrame(icesat_agg, geometry=icesat_agg.geometry)
 
         # export as shp
         ice_agg_gdf.to_file((out_dir + '/icesat_agg.shp')) # columns not renamed, will be truncated
@@ -728,11 +741,16 @@ def export_GEDI02_A(gedi_agg, config_dict):
 
     if out_shp:
         # read geometry
-        geom_gdf = gpd.read_file(polygons_path)
-        geom = geom_gdf.geometry
+        aoi = gpd.read_file(polygons_path)
+        #Adding the polygon_id -> same thing is done in agg() for the spatial join
+            # there is probably a better way that avoids doing this twice, but this works
+        aoi = aoi.sort_values('id')
+        aoi["polygon_id"] = range(0, len(aoi)) # changed this to start index at 0
+        geom = aoi.geometry
 
         # convert to geodataframes
-        gedi_agg_gdf = gpd.GeoDataFrame(gedi_agg, geometry=geom)
+        gedi_agg = pd.merge(gedi_agg, aoi, how="inner", on="polygon_id")
+        gedi_agg_gdf = gpd.GeoDataFrame(gedi_agg, geometry=gedi_agg.geometry)
 
         # export as shp
         gedi_agg_gdf.to_file((out_dir + '/gedi_agg.shp')) # columns not renamed, will be truncated
@@ -758,7 +776,7 @@ def main():
     # TESTING SETUP #
     import os
     # change this to the appropriate sample 
-    os.chdir("sample_polygons/Lake_Claire")
+    os.chdir("sample_polygons/Alfred_Bog")
     # TESTING SETUP #
     #################
 
