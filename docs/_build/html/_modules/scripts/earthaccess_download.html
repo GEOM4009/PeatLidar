@@ -48,7 +48,7 @@
 <span class="c1">### authenticate earthdata session</span>
 <div class="viewcode-block" id="authenticate">
 <a class="viewcode-back" href="../../scripts.html#scripts.earthaccess_download.authenticate">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">authenticate</span><span class="p">(</span><span class="n">status_check</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">authenticate</span><span class="p">(</span><span class="n">status_check</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span> 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Authenticate Earthdata credentials and initialize a session</span>
 
@@ -69,7 +69,7 @@
 
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Authenticating...&quot;</span><span class="p">)</span>
 
-    <span class="n">earthaccess</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">persist</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">earthaccess</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">persist</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="c1"># check status before starting -&gt; slow and probably not necessary</span>
     <span class="k">if</span> <span class="n">status_check</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
@@ -99,8 +99,8 @@
 <span class="sd">        Short name of the Earthdata product (e.g. GEDI02_A)</span>
 <span class="sd">    date_range : tuple</span>
 <span class="sd">        Start and end date as strings in YYYY-MM-DD format</span>
-<span class="sd">    polygon : string</span>
-<span class="sd">        Short name of the Earthdata product (e.g. GEDI02_A)</span>
+<span class="sd">    polygon : list</span>
+<span class="sd">        Linear ring of the input polygon</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>

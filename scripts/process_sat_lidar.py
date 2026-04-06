@@ -170,13 +170,13 @@ def download_check(download_dir, short_name):
 
     Returns
     -------
-    icesat_only (bool):
+    icesat_only: bool
         True if only ATL08 granules are found
-    gedi_only (bool):
+    gedi_only: bool
         True if only GEDI02_A granules are found
-    ATL08_granules (list):
+    ATL08_granules: list
         List of ICESat-2 ATL08 granules in download directory
-    GEDI02_A_granules (list):
+    GEDI02_A_granules: list
         List of GEDI L2A granules in download directory
     """
     # check existing granules in the download directory
@@ -482,7 +482,7 @@ def aggregate(polygons_path, df, satellite_name, radius):
     joined = assign_polygon_ids(df, aoi, radius)
 
     # export for testing
-    joined.to_csv(f"{satellite_name}_agg_test.csv")
+    #joined.to_csv(f"{satellite_name}_agg_test.csv")
 
     #
     def aggregate_by_polygon(df, stats, satellite_name):
@@ -560,7 +560,7 @@ def compare_data(icesat_agg, gedi_agg):
     df3["percent_diff"] = (diff / avg) * 100 
     
     # Export as CSV for testing purposes
-    df3.to_csv("compare3.csv", index=False)
+    #df3.to_csv("compare3.csv", index=False)
 
     print("Comparison complete")
 
@@ -815,6 +815,7 @@ def main():
         print("GEDI L2A granules complete")
         # aggregate by polygon
         gedi_agg = aggregate(polygons_path, gedi_df, "Gedi", 12.5) # 12.5 meter radius circles
+
  
 
     ### COMPARE ###

@@ -101,7 +101,7 @@
 </dd>
 <dt><strong>date_range</strong><span class="classifier">tuple</span></dt><dd><p>Start and end date as strings in YYYY-MM-DD format</p>
 </dd>
-<dt><strong>polygon</strong><span class="classifier">string</span></dt><dd><p>Short name of the Earthdata product (e.g. GEDI02_A)</p>
+<dt><strong>polygon</strong><span class="classifier">list</span></dt><dd><p>Linear ring of the input polygon</p>
 </dd>
 </dl>
 </dd>
@@ -226,13 +226,13 @@ Based on Xarray documentation examples, altered for use with Pandas Dataframes</
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>icesat_only (bool):</dt><dd><p>True if only ATL08 granules are found</p>
+<dt>icesat_only: bool</dt><dd><p>True if only ATL08 granules are found</p>
 </dd>
-<dt>gedi_only (bool):</dt><dd><p>True if only GEDI02_A granules are found</p>
+<dt>gedi_only: bool</dt><dd><p>True if only GEDI02_A granules are found</p>
 </dd>
-<dt>ATL08_granules (list):</dt><dd><p>List of ICESat-2 ATL08 granules in download directory</p>
+<dt>ATL08_granules: list</dt><dd><p>List of ICESat-2 ATL08 granules in download directory</p>
 </dd>
-<dt>GEDI02_A_granules (list):</dt><dd><p>List of GEDI L2A granules in download directory</p>
+<dt>GEDI02_A_granules: list</dt><dd><p>List of GEDI L2A granules in download directory</p>
 </dd>
 </dl>
 </dd>
@@ -354,7 +354,16 @@ Based on ConfigParser user guide: <a class="reference external" href="https://do
 <dl class="py function">
 <dt class="sig sig-object py" id="scripts.user_input3.write_user_config">
 <span class="sig-prename descclassname"><span class="pre">scripts.user_input3.</span></span><span class="sig-name descname"><span class="pre">write_user_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/scripts/user_input3.html#write_user_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scripts.user_input3.write_user_config" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Takes a user input to create a config file</p>
+<p>&#64;author: Ethan Gauthier</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>None</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
 
 </section>
 <section id="module-scripts">

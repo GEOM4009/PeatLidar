@@ -5,6 +5,15 @@
 
 # Takes a user input to create a config file 
 def write_user_config():
+    """
+    Takes a user input to create a config file 
+
+    @author: Ethan Gauthier
+
+    Returns
+    -------
+    None
+    """
     print("=== User Input Configuration ===")
 
     #User Inputs

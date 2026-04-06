@@ -10,10 +10,10 @@ import earthaccess
 import geopandas as gpd
 #import shapely # used for downloading polygon by polygon in (not used by default)
 from pathlib import Path
-from process_sat_lidar import read_config
+from scripts.process_sat_lidar import read_config
 
 ### authenticate earthdata session
-def authenticate(status_check=False):
+def authenticate(status_check=False): 
     """
     Authenticate Earthdata credentials and initialize a session
 
@@ -61,8 +61,8 @@ def search(short_name, date_range, polygon):
         Short name of the Earthdata product (e.g. GEDI02_A)
     date_range : tuple
         Start and end date as strings in YYYY-MM-DD format
-    polygon : string
-        Short name of the Earthdata product (e.g. GEDI02_A)
+    polygon : list
+        Linear ring of the input polygon
 
     Returns
     -------
