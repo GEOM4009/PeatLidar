@@ -77,3 +77,6 @@ output/icesat_agg.shp
 icesat_agg.csv
 icesat.csv
 .DS_Store
+.DS_Store
+.DS_Store
+*.h5
