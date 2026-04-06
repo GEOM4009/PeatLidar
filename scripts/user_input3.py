@@ -1,3 +1,9 @@
+##### user_input3.py #####
+# Developed as part of the PeatLidar final project for GEOM 4009
+
+# Author: Ethan Gauthier
+
+# Takes a user input to create a config file 
 def write_user_config():
     print("=== User Input Configuration ===")
 
