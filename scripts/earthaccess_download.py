@@ -10,7 +10,7 @@ import earthaccess
 import geopandas as gpd
 #import shapely # used for downloading polygon by polygon in (not used by default)
 from pathlib import Path
-from scripts.process_sat_lidar import read_config
+from process_sat_lidar import read_config
 
 ### authenticate earthdata session
 def authenticate(status_check=False): 
