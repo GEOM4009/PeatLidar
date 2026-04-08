@@ -11,7 +11,7 @@ This was designed to extract canopy height data from ICESat-2 ATL08 and GEDI L2A
 2. Query granules for given extent & date range
 3. Download granules to local directory
 
-![Flowchart - Download][images/flowcharts_download.jpg]
+![Flowchart - Download](images/flowcharts_download.jpg)
 
 **process_sat_lidar.py** - Aggregate by polygon and compare
 1. Extract canopy height from downloaded granules
@@ -20,7 +20,7 @@ This was designed to extract canopy height data from ICESat-2 ATL08 and GEDI L2A
 4. Compare GEDI L2A to ICESat-2 ATL08 values if both are present
 5. Export aggregated data and/or comparison as one or more of CSV, 
 
-![Flowchart - Aggregation][images/flowcharts_process.jpg]
+![Flowchart - Aggregation](images/flowcharts_process.jpg)
 
 **user_input3.py** - Optional script for interactively creating the config file
 
