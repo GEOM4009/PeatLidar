@@ -22,19 +22,19 @@ Authors: Vincent Ribberink, Joshua Salvador, Ethan Gauthier
 
 # Contents
 
-**docs** - Documentation and related files generated with Sphinx
+==**docs**== - Documentation and related files generated with Sphinx
 
-**scripts** - The three Python scripts comprising the tool
+==**scripts**== - The three Python scripts comprising the tool
 
-**samples** - Sample polygons, config files, and outputs for two demo folders. See User Guide below for how to run a demo
+==**samples**== - Sample polygons, config files, and outputs for two demo folders. See User Guide below for how to run a demo
 
 > /Alfred_Bog - 268 polygons, small area, E Ontario
 
 > /Lake_Claire - 1 polygon, large area, N Alberta
 
-**images** - Image files used throughout the documentation
+==**images**== - Image files used throughout the documentation
 
-**peatlidar.yml** - Conda environment file
+==**peatlidar.yml**== - Conda environment file
 
 ---
 
