@@ -57,6 +57,10 @@ Authors: Vincent Ribberink, Joshua Salvador, Ethan Gauthier
 
 **peatlidar.yml** - Conda environment file
 
+**LICENSE** - License file
+
+**PeatLidar_Presentation.pdf** - Slide deck from project presentation
+
 ---
 
 # Getting Started
