@@ -7,8 +7,18 @@ This was designed to extract canopy height data from ICESat-2 ATL08 and GEDI L2A
 ## General Workflow
 
 **earthaccess_download.py** - Download granules (large chunks of data)
+1. Get bounding box of input polygons
+2. Query granules for given extent & date range
+3. Download granules to local directory
+
+![][images/flowcharts_download.jpg]
 
 **process_sat_lidar.py** - Aggregate by polygon and compare
+1. Extract canopy height from downloaded granules
+2. Apply various filters (Night Flag, Beam Type) - See config
+3. Aggregate by polygon (mean, min, max, stdev)
+4. Compare GEDI L2A to ICESat-2 ATL08 values if both are present
+5. Export aggregated data and/or comparison as one or more of CSV, 
 
 **user_input3.py** - Optional script for interactively creating the config file
 
@@ -60,9 +70,15 @@ With a valid Conda install, run the following to create the required Conda envir
 
 NASA EarthData account credentials are required for downloading data. An account can be created for free [here](https://urs.earthdata.nasa.gov/users/new)
 
+### Clone Repository Locally
+
+Change the working directory to the desired location for the cloned directory, then run
+
+`git clone https://github.com/GEOM4009/PeatLidar.git`
+
 ### Config
 
-Both the download (*earthaccess_download.py*) and aggregation/processing scripts (*process_sat_lidar.py*) use a configuration file to store various parameters. This file can be created manually, copied from the examples in /sample_polygons, or created interactively with the optional third script *user_input3.py*. This file must be use INI format.
+Both the download (*earthaccess_download.py*) and aggregation/processing scripts (*process_sat_lidar.py*) use a configuration file to store various parameters. This file can be created manually, copied from the demo examples in */samples*, or created interactively with the optional third script *user_input3.py*. This file must be use INI format.
 
 ---
 
@@ -70,7 +86,7 @@ Both the download (*earthaccess_download.py*) and aggregation/processing scripts
 
 This section will give a brief overview on how to run the *"Alfred_Bog"* demo:
 
-### Clone Repository
+
 
 ### 
 
@@ -85,6 +101,8 @@ This section will give a brief overview on how to run the *"Alfred_Bog"* demo:
 **No granules were found by earthaccess_download.py():** Try expanding the date range and/or choose a larger area.
 
 **sjoin() got an unexpected keyword argument 'distance':** This is a relatively recent addition to sjoin(), try updating GeoPandas. If it still doesn't work, change the predicate to 'intersects' and use a buffer to simulate the footprints instead.
+
+**There are a bunch of warnings when exporting as a Shapefile:** These are just truncation warnings, meaning some field names are too long for a Shapefile and they will be shortened to 10 characters. This can be avoided by renaming the columns or exporting to a different format.
 
 
 
