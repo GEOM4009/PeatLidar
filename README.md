@@ -63,7 +63,7 @@ Authors: Vincent Ribberink, Joshua Salvador, Ethan Gauthier
 
 **PeatLidar Final Report.pdf** - Copy of Final Report. Includes introduction, discussion, and conclusions.
 
-**PeatLidar 1.0.0 Documentation.pdf** Sphinx-generated documentation as a pdf file
+**PeatLidar 1.0.0 Documentation.pdf** - Sphinx-generated documentation as a pdf file
 
 ---
 
@@ -148,10 +148,10 @@ The results can now be found in the output directory defined in the config file!
 >See above. Also, some of the filters can remove significant portions of the total data, so also try disabling those. Sometimes there simply aren't any overlapping observations, especially with small polygons. To manually check the data, uncomment the "export for testing" lines near the end of the convert_icesat() and/or convert_gedi() functions. The un-aggregated observations will be exported to CSVs with coordinates.
 
 **sjoin() got an unexpected keyword argument 'distance':** 
->This is a relatively recent addition to sjoin(), try updating GeoPandas. If it still doesn't work, change the predicate to 'intersects' and use a buffer to >simulate the footprints instead.
+>This is a relatively recent addition to sjoin(), try updating GeoPandas. If it still doesn't work, change the predicate to 'intersects' and use a buffer to simulate the footprints instead.
 
 **There are a bunch of warnings when exporting as a Shapefile:** 
->These are just truncation warnings, meaning some field names are too long for a Shapefile and they will be shortened to 10 characters. This can be avoided >by renaming the columns or exporting to a different format.
+>These are just truncation warnings, meaning some field names are too long for a Shapefile and they will be shortened to 10 characters. This can be avoided by renaming the columns or exporting to a different format.
 
 
 
