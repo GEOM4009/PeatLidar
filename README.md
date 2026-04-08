@@ -18,7 +18,7 @@ This was designed to extract canopy height data from ICESat-2 ATL08 and GEDI L2A
 2. Apply various filters (Night Flag, Beam Type) - See config
 3. Aggregate by polygon (mean, min, max, stdev)
 4. Compare GEDI L2A to ICESat-2 ATL08 values if both are present
-5. Export aggregated data and/or comparison as one or more of CSV, 
+5. Export aggregated data and/or comparison as one or more of CSV, Parquet, Shapefile
 
 <img src="images/flowcharts_process.jpg" alt="Flowchart - Aggregation" width="400">
 
