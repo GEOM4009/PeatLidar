@@ -114,19 +114,25 @@ The results can now be found in the output directory defined in the config file!
 
 ## FAQ/Troubleshooting
 
-**Do I have to enter my credentials every time I run earthaccess_download.py()?:** In earthaccess_download.authenticate(), "earthaccess.login("persist=False") can be set to True to store credentials locally in a .netrc file to avoid this.
+**Do I have to enter my credentials every time I run earthaccess_download.py()?:** 
+>In earthaccess_download.authenticate(), "earthaccess.login("persist=False") can be set to True to store credentials locally in a .netrc file to avoid this.
 
 <img src="images/credentials_persist.png" alt="Saving credentials to local file" width="600">
 
-**EarthData Authentication is taking a long time:** It can take 1-2 minutes depending on connection speed.
+**EarthData Authentication is taking a long time:** 
+>It can take 1-2 minutes depending on connection speed.
 
-**No granules were found by earthaccess_download.py():** Try expanding the date range and/or choose a larger area.
+**No granules were found by earthaccess_download.py():** 
+>Try expanding the date range and/or choose a larger area.
 
-**No intersecting observations were found when aggregating:** See above. Also, some of the filters can remove significant portions of the total data, so also try disabling those. Sometimes there simply aren't any overlapping observations, especially with small polygons. To manually check the data, uncomment the "export for testing" lines near the end of the convert_icesat() and/or convert_gedi() functions. The un-aggregated observations will be exported to CSVs with coordinates.
+**No intersecting observations were found when aggregating:** 
+>See above. Also, some of the filters can remove significant portions of the total data, so also try disabling those. Sometimes there simply aren't any overlapping observations, especially with small polygons. To manually check the data, uncomment the "export for testing" lines near the end of the convert_icesat() and/or convert_gedi() functions. The un-aggregated observations will be exported to CSVs with coordinates.
 
-**sjoin() got an unexpected keyword argument 'distance':** This is a relatively recent addition to sjoin(), try updating GeoPandas. If it still doesn't work, change the predicate to 'intersects' and use a buffer to simulate the footprints instead.
+**sjoin() got an unexpected keyword argument 'distance':** 
+>This is a relatively recent addition to sjoin(), try updating GeoPandas. If it still doesn't work, change the predicate to 'intersects' and use a buffer to >simulate the footprints instead.
 
-**There are a bunch of warnings when exporting as a Shapefile:** These are just truncation warnings, meaning some field names are too long for a Shapefile and they will be shortened to 10 characters. This can be avoided by renaming the columns or exporting to a different format.
+**There are a bunch of warnings when exporting as a Shapefile:** 
+>These are just truncation warnings, meaning some field names are too long for a Shapefile and they will be shortened to 10 characters. This can be avoided >by renaming the columns or exporting to a different format.
 
 
 
