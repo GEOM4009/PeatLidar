@@ -59,7 +59,11 @@ Authors: Vincent Ribberink, Joshua Salvador, Ethan Gauthier
 
 **LICENSE** - License file
 
-**PeatLidar_Presentation.pdf** - Slide deck from project presentation
+**PeatLidar Presentation.pdf** - Slide deck from project presentation
+
+**PeatLidar Final Report.pdf** - Copy of Final Report. Includes introduction, discussion, and conclusions.
+
+**PeatLidar 1.0.0 Documentation.pdf** Sphinx-generated documentation as a pdf file
 
 ---
 
