@@ -98,7 +98,7 @@ Set the parameters as desired in the config file (`config_sat_lidar.txt`). Comme
 
 3. Run **earthaccess_download.py**
 If authenticating for the first time, earthaccess will prompt you for your account credentials. See the FAQ section for how to store credentials locally. Authentication may take some time, after which the number of queried granules will be shown, as well as a progress bar for the downloads. These downloads can be significant: the default config for this demo (2-year period) for Alfred Bog is already ~25 GB.
-> `Note: the download directory does not exist yet and will have to be created locally. By default, it is named "download_dir" in the config file.`
+> *Note: the download directory does not exist yet and will have to be created locally. By default, it is named "download_dir" in the config file.*
 
 4. Run **process_sat_lidar.py**
 This will aggregate the data to the input polygons, compare results between satellites if possible, and export as the file formats defined in the config. The number of filtered and intersecting observations will be printed, as well as whether the comparison was done or not.
@@ -112,7 +112,7 @@ The results can now be found in the output directory defined in the config file!
 
 **Do I have to enter my credentials every time I run earthaccess_download.py()?:** In earthaccess_download.authenticate(), "earthaccess.login("persist=False") can be set to True to store credentials locally in a .netrc file to avoid this.
 
-<img src="images/credentials_persist.png" alt="Saving credentials to local file" width="400">
+<img src="images/credentials_persist.png" alt="Saving credentials to local file" width="600">
 
 **EarthData Authentication is taking a long time:** It can take 1-2 minutes depending on connection speed.
 
